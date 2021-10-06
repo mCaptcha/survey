@@ -1,0 +1,23 @@
+{
+  "db": "PostgreSQL",
+  "f7c3faa9860de77ac29bb99afd4ed02112cf6c9432c094a3646fe64384f33866": {
+    "query": "SELECT challenges FROM survey_surveys WHERE id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "challenges",
+          "type_info": "Int4Array"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  }
+}

@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS survey_surveys (
+    ID UUID PRIMARY KEY NOT NULL UNIQUE,
+	name VARCHAR(100) NOT NULL,
+	challenges serial[] NOT NULL
+)

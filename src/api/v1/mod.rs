@@ -18,6 +18,7 @@ use actix_web::web::ServiceConfig;
 use uuid::Uuid;
 
 pub mod auth;
+pub mod cache;
 mod meta;
 pub mod routes;
 pub use routes::ROUTES;

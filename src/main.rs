@@ -128,7 +128,7 @@ pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
     let cookie_secret = &SETTINGS.server.cookie_secret;
     IdentityService::new(
         CookieIdentityPolicy::new(cookie_secret.as_bytes())
-            .name("Authorization")
+            .name("survey-id")
             //TODO change cookie age
             .max_age_secs(216000)
             .domain(&SETTINGS.server.domain)
