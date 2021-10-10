@@ -32,6 +32,10 @@ frontend: ## Build frontend assets
 	@-mkdir ./static/cache/bundle/css/
 	@yarn run dart-sass -s compressed templates/main.scss  ./static/cache/bundle/css/main.css
 
+lint: ## Lint codebase
+	cargo fmt -v --all -- --emit files
+	cargo clippy --workspace --tests --all-features
+
 migrate: ## Run database migrations
 	cargo run --bin tests-migrate
 

@@ -18,7 +18,7 @@ use actix_web::web::ServiceConfig;
 use uuid::Uuid;
 
 pub mod auth;
-pub mod cache;
+pub mod bench;
 mod meta;
 pub mod routes;
 pub use routes::ROUTES;
@@ -26,6 +26,7 @@ pub use routes::ROUTES;
 pub fn services(cfg: &mut ServiceConfig) {
     meta::services(cfg);
     auth::services(cfg);
+    bench::services(cfg);
 }
 
 pub fn get_random(len: usize) -> String {

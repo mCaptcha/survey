@@ -15,6 +15,7 @@
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use super::auth::routes::Auth;
+use super::bench::routes::Benches;
 use super::meta::routes::Meta;
 
 pub const ROUTES: Routes = Routes::new();
@@ -22,6 +23,7 @@ pub const ROUTES: Routes = Routes::new();
 pub struct Routes {
     pub auth: Auth,
     pub meta: Meta,
+    pub benches: Benches,
 }
 
 impl Routes {
@@ -29,6 +31,7 @@ impl Routes {
         Routes {
             auth: Auth::new(),
             meta: Meta::new(),
+            benches: Benches::new(),
         }
     }
 }
