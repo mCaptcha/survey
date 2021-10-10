@@ -1,23 +1,67 @@
 {
   "db": "PostgreSQL",
-  "f7c3faa9860de77ac29bb99afd4ed02112cf6c9432c094a3646fe64384f33866": {
-    "query": "SELECT challenges FROM survey_surveys WHERE id = $1",
+  "0d27c6787e145f980063f008266ec00bd96f5a761d6f23bbe2bdc63a5163ba69": {
+    "query": "SELECT ID FROM survey_responses \n     WHERE user_id = $1 AND device_software_recognised = $2",
     "describe": {
       "columns": [
         {
           "ordinal": 0,
-          "name": "challenges",
-          "type_info": "Int4Array"
+          "name": "id",
+          "type_info": "Int4"
         }
       ],
       "parameters": {
         "Left": [
-          "Uuid"
+          "Uuid",
+          "Text"
         ]
       },
       "nullable": [
         false
       ]
+    }
+  },
+  "b50210741c2fa689a8bd7f211a650c6616178f927c2c9320e5b6e25dc7c3cc1a": {
+    "query": "INSERT INTO survey_response_tokens (resp_id, user_id, id)\n    VALUES ($1, $2, $3)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Uuid",
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "cbf1bac274a6a1b1339615b406b9127c4f314080450e7bd5a5652f5febfb0d21": {
+    "query": "INSERT INTO survey_responses (user_id, device_user_provided, device_software_recognised,\n     threads) VALUES ($1, $2, $3, $4)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar",
+          "Varchar",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "d958feaec808739d8fddc2d6a3b560fae2e5aa496c44b24a6f70e73ebb291568": {
+    "query": "INSERT INTO survey_benches \n                (resp_id, difficulty, duration) VALUES ($1, $2, $3)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4",
+          "Float4"
+        ]
+      },
+      "nullable": []
     }
   }
 }
