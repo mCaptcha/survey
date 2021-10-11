@@ -30,7 +30,7 @@ frontend: ## Build frontend assets
 	@yarn install
 	@-rm -rf ./static/cache/bundle/
 	@-mkdir ./static/cache/bundle/css/
-	@yarn run dart-sass -s compressed templates/main.scss  ./static/cache/bundle/css/main.css
+	#@yarn run dart-sass -s compressed templates/main.scss  ./static/cache/bundle/css/main.css
 
 lint: ## Lint codebase
 	cargo fmt -v --all -- --emit files

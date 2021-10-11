@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::borrow::Cow;
 use std::str::FromStr;
 
 use actix_identity::Identity;
@@ -22,7 +23,6 @@ use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::get_random;
 use super::get_uuid;
 use crate::errors::*;
 use crate::AppData;
@@ -58,6 +58,12 @@ struct Submission {
     benches: Vec<Bench>,
 }
 
+#[derive(Serialize, Deserialize)]
+struct SubmissionProof {
+    token: String,
+    proof: String,
+}
+
 #[my_codegen::post(
     path = "crate::V1_API_ROUTES.benches.submit",
     wrap = "crate::CheckLogin"
@@ -72,9 +78,20 @@ async fn submit(
     let user_id = Uuid::from_str(&username).unwrap();
     let payload = payload.into_inner();
 
-    sqlx::query!("INSERT INTO survey_responses (user_id, device_user_provided, device_software_recognised,
-     threads) VALUES ($1, $2, $3, $4)", &user_id, &payload.device_user_provided,
-     &payload.device_software_recognised, &payload.threads).execute(&data.db).await?;
+    sqlx::query!(
+        "INSERT INTO survey_responses (
+                        user_id, 
+                        device_user_provided,
+                        device_software_recognised,
+                        threads
+                    ) VALUES ($1, $2, $3, $4);",
+        &user_id,
+        &payload.device_user_provided,
+        &payload.device_software_recognised,
+        &payload.threads
+    )
+    .execute(&data.db)
+    .await?;
 
     struct ID {
         id: i32,
@@ -82,8 +99,12 @@ async fn submit(
 
     let resp_id = sqlx::query_as!(
         ID,
-        "SELECT ID FROM survey_responses 
-     WHERE user_id = $1 AND device_software_recognised = $2",
+        "SELECT ID 
+         FROM survey_responses 
+         WHERE 
+             user_id = $1 
+         AND 
+             device_software_recognised = $2;",
         &user_id,
         &payload.device_software_recognised
     )
@@ -95,7 +116,8 @@ async fn submit(
     for bench in payload.benches.iter() {
         let fut = sqlx::query!(
             "INSERT INTO survey_benches 
-                (resp_id, difficulty, duration) VALUES ($1, $2, $3)",
+                (resp_id, difficulty, duration) 
+            VALUES ($1, $2, $3);",
             &resp_id.id,
             &bench.difficulty,
             bench.duration
@@ -105,20 +127,40 @@ async fn submit(
         futs.push(fut);
     }
 
-    let submitions_id = get_uuid();
-
-    let fut = sqlx::query!(
-        "INSERT INTO survey_response_tokens (resp_id, user_id, id)
-    VALUES ($1, $2, $3)",
-        &resp_id.id,
-        &user_id,
-        &submitions_id
-    )
-    .execute(&data.db);
-
-    futs.push(fut);
-
+    let mut submitions_id;
     try_join_all(futs).await?;
 
-    Ok(HttpResponse::Ok())
+    loop {
+        submitions_id = get_uuid();
+
+        let res = sqlx::query!(
+            "INSERT INTO survey_response_tokens 
+            (resp_id, user_id, id)
+            VALUES ($1, $2, $3);",
+            &resp_id.id,
+            &user_id,
+            &submitions_id
+        )
+        .execute(&data.db)
+        .await;
+
+        if res.is_ok() {
+            break;
+        } else if let Err(sqlx::Error::Database(err)) = res {
+            if err.code() == Some(Cow::from("23505"))
+                && err.message().contains("survey_response_tokens_id_key")
+            {
+                continue;
+            } else {
+                return Err(sqlx::Error::Database(err).into());
+            }
+        }
+    }
+
+    let resp = SubmissionProof {
+        token: username,
+        proof: submitions_id.to_string(),
+    };
+
+    Ok(HttpResponse::Ok().json(resp))
 }
