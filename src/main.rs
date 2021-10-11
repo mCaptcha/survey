@@ -31,7 +31,7 @@ mod errors;
 mod middleware;
 //mod pages;
 mod settings;
-//mod static_assets;
+mod static_assets;
 #[cfg(test)]
 #[macro_use]
 mod tests;
@@ -41,13 +41,13 @@ pub use api::v1::ROUTES as V1_API_ROUTES;
 pub use middleware::auth::CheckLogin;
 //pub use pages::routes::ROUTES as PAGES;
 pub use settings::Settings;
-//pub use static_assets::static_files::assets;
-//
-//use static_assets::FileMap;
+pub use static_assets::static_files::assets;
+
+use static_assets::FileMap;
 
 lazy_static! {
     pub static ref SETTINGS: Settings = Settings::new().unwrap();
-//    pub static ref FILES: FileMap = FileMap::new();
+    pub static ref FILES: FileMap = FileMap::new();
 //
 //    pub static ref CSS: &'static str =
 //        FILES.get("./static/cache/bundle/css/main.css").unwrap();
@@ -153,5 +153,5 @@ pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     //pages::services(cfg);
     api::v1::services(cfg);
-    //   static_assets::services(cfg);
+    static_assets::services(cfg);
 }
