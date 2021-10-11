@@ -26,7 +26,15 @@ use futures::future::{ok, Either, Ready};
 
 pub const AUTH: &str = crate::V1_API_ROUTES.auth.register;
 
-pub struct CheckLogin;
+pub struct CheckLogin {
+    login: &'static str,
+}
+
+impl CheckLogin {
+    pub fn new(login: &'static str) -> Self {
+        Self { login }
+    }
+}
 
 impl<S> Transform<S, ServiceRequest> for CheckLogin
 where
@@ -40,11 +48,15 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ok(CheckLoginMiddleware { service })
+        ok(CheckLoginMiddleware {
+            service,
+            login: self.login,
+        })
     }
 }
 pub struct CheckLoginMiddleware<S> {
     service: S,
+    login: &'static str,
 }
 
 impl<S> Service<ServiceRequest> for CheckLoginMiddleware<S>
@@ -73,7 +85,7 @@ where
             let req = ServiceRequest::from_parts(r, pl); //.ok().unwrap();
             Either::Right(ok(req.into_response(
                 HttpResponse::Found()
-                    .insert_header((http::header::LOCATION, AUTH))
+                    .insert_header((http::header::LOCATION, self.login))
                     .finish(),
             )))
         }

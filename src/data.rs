@@ -18,9 +18,9 @@
 use std::sync::Arc;
 use std::thread;
 
+use argon2_creds::{Config, ConfigBuilder, PasswordPolicy};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
-use argon2_creds::{Config, ConfigBuilder, PasswordPolicy};
 
 use crate::SETTINGS;
 
@@ -28,7 +28,7 @@ use crate::SETTINGS;
 pub struct Data {
     /// databse pool
     pub db: PgPool,
-        pub creds: Config,
+    pub creds: Config,
 }
 
 impl Data {
@@ -45,7 +45,7 @@ impl Data {
     #[cfg(not(tarpaulin_include))]
     /// create new instance of app data
     pub async fn new() -> Arc<Self> {
-                let creds = Self::get_creds();
+        let creds = Self::get_creds();
         let c = creds.clone();
         #[allow(unused_variables)]
         let init = thread::spawn(move || {

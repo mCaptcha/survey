@@ -150,7 +150,6 @@ pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
     )
 }
 
-
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     //pages::services(cfg);
     api::v1::services(cfg);

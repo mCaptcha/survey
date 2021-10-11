@@ -40,7 +40,11 @@ pub mod routes {
             let submit = "/api/v1/benches/submit";
             let register = "/api/v1/benches/register";
             let scope = "/api/v1/benches/";
-            Benches { submit, register, scope }
+            Benches {
+                submit,
+                register,
+                scope,
+            }
         }
     }
 }
@@ -49,7 +53,6 @@ pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(submit);
     cfg.service(register);
 }
-
 
 pub mod runners {
     use super::*;
@@ -93,7 +96,6 @@ async fn register(data: AppData, id: Identity) -> ServiceResult<impl Responder> 
     Ok(HttpResponse::Ok())
 }
 
-
 #[derive(Serialize, Deserialize)]
 struct Bench {
     duration: f32,
@@ -114,9 +116,13 @@ struct SubmissionProof {
     proof: String,
 }
 
+fn get_check_login() -> crate::CheckLogin {
+    crate::CheckLogin::new(crate::V1_API_ROUTES.benches.register)
+}
+
 #[my_codegen::post(
     path = "crate::V1_API_ROUTES.benches.submit",
-    wrap = "crate::CheckLogin"
+    wrap = "get_check_login()"
 )]
 async fn submit(
     data: AppData,
