@@ -18,6 +18,7 @@ use actix_web::web::ServiceConfig;
 
 pub mod account;
 pub mod auth;
+pub mod campaigns;
 #[cfg(test)]
 mod tests;
 
@@ -35,10 +36,12 @@ pub fn get_admin_check_login() -> crate::CheckLogin {
 pub mod routes {
     use super::account::routes::Account;
     use super::auth::routes::Auth;
+    use super::campaigns::routes::Campaign;
 
     pub struct Admin {
         pub auth: Auth,
         pub account: Account,
+        pub campaign: Campaign,
     }
 
     impl Admin {
@@ -46,6 +49,7 @@ pub mod routes {
             Admin {
                 account: Account::new(),
                 auth: Auth::new(),
+                campaign: Campaign::new(),
             }
         }
     }

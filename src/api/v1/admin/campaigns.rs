@@ -18,6 +18,7 @@ use std::borrow::Cow;
 
 use actix_identity::Identity;
 use actix_web::{web, HttpResponse, Responder};
+use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
 
 use super::get_uuid;
@@ -25,14 +26,14 @@ use crate::errors::*;
 use crate::AppData;
 
 pub mod routes {
-    pub struct Challenges {
+    pub struct Campaign {
         pub add: &'static str,
     }
 
-    impl Challenges {
-        pub const fn new() -> Challenges {
-            let add = "/api/v1/admin/challenges/add";
-            Challenges { add }
+    impl Campaign {
+        pub const fn new() -> Campaign {
+            let add = "/api/v1/admin/campaign/add";
+            Campaign { add }
         }
     }
 }
@@ -42,7 +43,11 @@ pub mod runners {
 
     use super::*;
 
-    pub async fn add_runner(data: &AppData) -> ServiceResult<uuid::Uuid> {
+    pub async fn add_runner(
+        username: &str,
+        payload: &AddCapmaign,
+        data: &AppData,
+    ) -> ServiceResult<uuid::Uuid> {
         let mut uuid;
         let now = OffsetDateTime::now_utc();
 
@@ -51,9 +56,17 @@ pub mod runners {
 
             let res = sqlx::query!(
                 "
-             INSERT INTO survey_users (created_at, id) VALUES($1, $2)",
-                &now,
-                &uuid
+INSERT INTO survey_campaigns (
+    user_id, ID, name, difficulties, created_at
+    ) VALUES(
+        (SELECT id FROM survey_admins WHERE name = $1),
+        $2, $3, $4, $5
+    );",
+                username,
+                &uuid,
+                &payload.name,
+                &payload.difficulties,
+                &now
             )
             .execute(&data.db)
             .await;
@@ -62,7 +75,7 @@ pub mod runners {
                 break;
             } else if let Err(sqlx::Error::Database(err)) = res {
                 if err.code() == Some(Cow::from("23505"))
-                    && err.message().contains("survey_users_id_key")
+                    && err.message().contains("survey_admins_id_key")
                 {
                     continue;
                 } else {
@@ -74,12 +87,23 @@ pub mod runners {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct AddCapmaign {
+    name: String,
+    difficulties: Vec<i32>,
+}
+
 pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(add);
 }
-#[my_codegen::post(path = "crate::V1_API_ROUTES.auth.add")]
-async fn add(data: AppData, id: Identity) -> ServiceResult<impl Responder> {
-    let uuid = runners::add_runner(&data).await?;
-    id.remember(uuid.to_string());
+#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.campaign.add")]
+async fn add(
+    payload: web::Json<AddCapmaign>,
+    data: AppData,
+    id: Identity,
+) -> ServiceResult<impl Responder> {
+    let username = id.identity().unwrap();
+    let payload = payload.into_inner();
+    let _campaign_id = runners::add_runner(&username, &payload, &data).await?;
     Ok(HttpResponse::Ok())
 }

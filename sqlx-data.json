@@ -1,20 +1,5 @@
 {
   "db": "PostgreSQL",
-  "07dd9f4c2edd99714b3de90365fdae4f874c66a736c308df6e668ef9b86737dc": {
-    "query": "INSERT INTO survey_responses (\n                        user_id, \n                        device_user_provided,\n                        device_software_recognised,\n                        threads\n                    ) VALUES ($1, $2, $3, $4);",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Varchar",
-          "Varchar",
-          "Int4"
-        ]
-      },
-      "nullable": []
-    }
-  },
   "0d22134cc5076304b7895827f006ee8269cc500f400114a7472b83f0f1c568b5": {
     "query": "INSERT INTO survey_admins \n        (name , password,  secret) VALUES ($1, $2, $3)",
     "describe": {
@@ -97,6 +82,22 @@
       "parameters": {
         "Left": [
           "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "3e31af624e06a2261fa85f25b5ec4c62a8408cd7283042e24b2aee2998931426": {
+    "query": "\nINSERT INTO survey_campaigns (\n    user_id, ID, name, difficulties, created_at\n    ) VALUES(\n        (SELECT id FROM survey_admins WHERE name = $1),\n        $2, $3, $4, $5\n    );",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Uuid",
+          "Varchar",
+          "Int4Array",
+          "Timestamptz"
         ]
       },
       "nullable": []
@@ -224,6 +225,22 @@
         "Left": [
           "Varchar",
           "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "b4cd1e5240de1968c8b6d56672cec639b22f41ebf2754dadbf00efe0948c7e68": {
+    "query": "INSERT INTO survey_responses (\n                        user_id, \n                        campaign_id,\n                        device_user_provided,\n                        device_software_recognised,\n                        threads\n                    ) VALUES ($1, $2, $3, $4, $5);",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Varchar",
+          "Varchar",
+          "Int4"
         ]
       },
       "nullable": []
