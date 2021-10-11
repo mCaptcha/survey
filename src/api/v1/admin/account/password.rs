@@ -20,7 +20,7 @@ use argon2_creds::Config;
 use serde::{Deserialize, Serialize};
 use sqlx::Error::RowNotFound;
 
-use crate::api::v1::auth::runners::Password;
+use crate::api::v1::admin::auth::runners::Password;
 use crate::errors::*;
 use crate::*;
 
@@ -69,8 +69,8 @@ async fn update_password_runner(
 }
 
 #[my_codegen::post(
-    path = "crate::V1_API_ROUTES.account.update_password",
-    wrap = "crate::api::v1::get_admin_check_login()"
+    path = "crate::V1_API_ROUTES.admin.account.update_password",
+    wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]
 async fn update_user_password(
     id: Identity,
@@ -167,7 +167,7 @@ mod tests {
         bad_post_req_test(
             NAME,
             new_password,
-            ROUTES.account.update_password,
+            ROUTES.admin.account.update_password,
             &update_password,
             ServiceError::PasswordsDontMatch,
         )
@@ -182,7 +182,7 @@ mod tests {
         bad_post_req_test(
             NAME,
             new_password,
-            ROUTES.account.update_password,
+            ROUTES.admin.account.update_password,
             &update_password,
             ServiceError::WrongPassword,
         )
@@ -196,7 +196,7 @@ mod tests {
 
         let update_password_resp = test::call_service(
             &app,
-            post_request!(&update_password, ROUTES.account.update_password)
+            post_request!(&update_password, ROUTES.admin.account.update_password)
                 .cookie(cookies)
                 .to_request(),
         )

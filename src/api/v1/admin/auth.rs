@@ -33,9 +33,9 @@ pub mod routes {
 
     impl Auth {
         pub const fn new() -> Auth {
-            let login = "/api/v1/signin";
+            let login = "/api/v1/admin/signin";
             let logout = "/logout";
-            let register = "/api/v1/signup";
+            let register = "/api/v1/admin/signup";
             Auth {
                 logout,
                 login,
@@ -201,7 +201,7 @@ pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(login);
     cfg.service(signout);
 }
-#[my_codegen::post(path = "crate::V1_API_ROUTES.auth.register")]
+#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.auth.register")]
 async fn register(
     payload: web::Json<runners::Register>,
     data: AppData,
@@ -210,7 +210,7 @@ async fn register(
     Ok(HttpResponse::Ok())
 }
 
-#[my_codegen::post(path = "crate::V1_API_ROUTES.auth.login")]
+#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.auth.login")]
 async fn login(
     id: Identity,
     payload: web::Json<runners::Login>,
@@ -222,14 +222,14 @@ async fn login(
     Ok(HttpResponse::Ok())
 }
 #[my_codegen::get(
-    path = "crate::V1_API_ROUTES.auth.logout",
-    wrap = "crate::api::v1::get_admin_check_login()"
+    path = "crate::V1_API_ROUTES.admin.auth.logout",
+    wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]
 async fn signout(id: Identity) -> impl Responder {
     if id.identity().is_some() {
         id.forget();
     }
     HttpResponse::Found()
-        .append_header((header::LOCATION, crate::middleware::auth::AUTH))
+        .append_header((header::LOCATION, crate::V1_API_ROUTES.admin.auth.register))
         .finish()
 }

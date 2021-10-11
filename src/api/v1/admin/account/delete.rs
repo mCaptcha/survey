@@ -23,8 +23,8 @@ use crate::errors::*;
 use crate::AppData;
 
 #[my_codegen::post(
-    path = "crate::V1_API_ROUTES.account.delete",
-    wrap = "crate::api::v1::get_admin_check_login()"
+    path = "crate::V1_API_ROUTES.admin.account.delete",
+    wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]
 async fn delete_account(
     id: Identity,

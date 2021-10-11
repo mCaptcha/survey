@@ -42,14 +42,14 @@ pub mod routes {
 
     impl Account {
         pub const fn new() -> Account {
-            let get_secret = "/api/v1/account/secret/get";
-            let update_secret = "/api/v1/account/secret/update";
-            let delete = "/api/v1/account/delete";
-            let email_exists = "/api/v1/account/email/exists";
-            let username_exists = "/api/v1/account/username/exists";
-            let update_username = "/api/v1/account/username/update";
-            let update_email = "/api/v1/account/email/update";
-            let update_password = "/api/v1/account/password/update";
+            let get_secret = "/api/v1/admin/account/secret/get";
+            let update_secret = "/api/v1/admin/account/secret/update";
+            let delete = "/api/v1/admin/account/delete";
+            let email_exists = "/api/v1/admin/account/email/exists";
+            let username_exists = "/api/v1/admin/account/username/exists";
+            let update_username = "/api/v1/admin/account/username/update";
+            let update_email = "/api/v1/admin/account/email/update";
+            let update_password = "/api/v1/admin/account/password/update";
             Account {
                 delete,
                 email_exists,

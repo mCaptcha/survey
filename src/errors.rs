@@ -53,6 +53,10 @@ pub enum ServiceError {
     #[display(fmt = "The value you entered for email is not an email")] //405j
     NotAnEmail,
 
+    #[display(fmt = "The value you entered for campaign id is not a valid campaign ID")]
+    //405j
+    NotAnId,
+
     /// when the a token name is already taken
     /// token not found
     #[display(fmt = "Token not found. Is token registered?")]
@@ -117,6 +121,7 @@ impl ResponseError for ServiceError {
             ServiceError::UsernameTaken => StatusCode::BAD_REQUEST,
             ServiceError::EmailTaken => StatusCode::BAD_REQUEST,
             ServiceError::NotAnEmail => StatusCode::BAD_REQUEST,
+            ServiceError::NotAnId => StatusCode::BAD_REQUEST,
             ServiceError::WrongPassword => StatusCode::UNAUTHORIZED,
             ServiceError::AccountNotFound => StatusCode::NOT_FOUND,
 

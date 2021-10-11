@@ -31,7 +31,7 @@ pub mod routes {
 
     impl Challenges {
         pub const fn new() -> Challenges {
-            let add = "/api/v1/challenges/add";
+            let add = "/api/v1/admin/challenges/add";
             Challenges { add }
         }
     }

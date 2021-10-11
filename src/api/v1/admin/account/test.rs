@@ -21,7 +21,7 @@ use actix_web::test;
 use super::email::*;
 use super::username::Username;
 use super::*;
-use crate::api::v1::auth::runners::Password;
+use crate::api::v1::admin::auth::runners::Password;
 use crate::api::v1::ROUTES;
 use crate::data::Data;
 use crate::*;
@@ -49,7 +49,7 @@ async fn uname_email_exists_works() {
         &app,
         test::TestRequest::get()
             .cookie(cookies.clone())
-            .uri(ROUTES.account.get_secret)
+            .uri(ROUTES.admin.account.get_secret)
             .to_request(),
     )
     .await;
@@ -60,7 +60,7 @@ async fn uname_email_exists_works() {
         &app,
         test::TestRequest::post()
             .cookie(cookies.clone())
-            .uri(ROUTES.account.update_secret)
+            .uri(ROUTES.admin.account.update_secret)
             .to_request(),
     )
     .await;
@@ -70,7 +70,7 @@ async fn uname_email_exists_works() {
 
     let user_exists_resp = test::call_service(
         &app,
-        post_request!(&payload, ROUTES.account.username_exists)
+        post_request!(&payload, ROUTES.admin.account.username_exists)
             .cookie(cookies.clone())
             .to_request(),
     )
@@ -83,7 +83,7 @@ async fn uname_email_exists_works() {
 
     let user_doesnt_exist = test::call_service(
         &app,
-        post_request!(&payload, ROUTES.account.username_exists)
+        post_request!(&payload, ROUTES.admin.account.username_exists)
             .cookie(cookies.clone())
             .to_request(),
     )
@@ -94,7 +94,7 @@ async fn uname_email_exists_works() {
 
     let email_doesnt_exist = test::call_service(
         &app,
-        post_request!(&payload, ROUTES.account.email_exists)
+        post_request!(&payload, ROUTES.admin.account.email_exists)
             .cookie(cookies.clone())
             .to_request(),
     )
@@ -107,7 +107,7 @@ async fn uname_email_exists_works() {
 
     let email_exist = test::call_service(
         &app,
-        post_request!(&payload, ROUTES.account.email_exists)
+        post_request!(&payload, ROUTES.admin.account.email_exists)
             .cookie(cookies.clone())
             .to_request(),
     )
@@ -142,7 +142,7 @@ async fn email_udpate_password_validation_del_userworks() {
     };
     let email_update_resp = test::call_service(
         &app,
-        post_request!(&email_payload, ROUTES.account.update_email)
+        post_request!(&email_payload, ROUTES.admin.account.update_email)
             //post_request!(&email_payload, EMAIL_UPDATE)
             .cookie(cookies.clone())
             .to_request(),
@@ -155,7 +155,7 @@ async fn email_udpate_password_validation_del_userworks() {
     bad_post_req_test(
         NAME,
         PASSWORD,
-        ROUTES.account.update_email,
+        ROUTES.admin.account.update_email,
         &email_payload,
         ServiceError::EmailTaken,
     )
@@ -168,7 +168,7 @@ async fn email_udpate_password_validation_del_userworks() {
     bad_post_req_test(
         NAME,
         PASSWORD,
-        ROUTES.account.delete,
+        ROUTES.admin.account.delete,
         &payload,
         ServiceError::WrongPassword,
     )
@@ -178,7 +178,7 @@ async fn email_udpate_password_validation_del_userworks() {
     payload.password = PASSWORD.into();
     let delete_user_resp = test::call_service(
         &app,
-        post_request!(&payload, ROUTES.account.delete)
+        post_request!(&payload, ROUTES.admin.account.delete)
             .cookie(cookies.clone())
             .to_request(),
     )
@@ -189,7 +189,7 @@ async fn email_udpate_password_validation_del_userworks() {
     // try to delete an account that doesn't exist
     let account_not_found_resp = test::call_service(
         &app,
-        post_request!(&payload, ROUTES.account.delete)
+        post_request!(&payload, ROUTES.admin.account.delete)
             .cookie(cookies)
             .to_request(),
     )
@@ -229,7 +229,7 @@ async fn username_update_works() {
     };
     let username_update_resp = test::call_service(
         &app,
-        post_request!(&username_udpate, ROUTES.account.update_username)
+        post_request!(&username_udpate, ROUTES.admin.account.update_username)
             .cookie(cookies)
             .to_request(),
     )
@@ -241,7 +241,7 @@ async fn username_update_works() {
     bad_post_req_test(
         NAME_CHANGE,
         PASSWORD,
-        ROUTES.account.update_username,
+        ROUTES.admin.account.update_username,
         &username_udpate,
         ServiceError::UsernameTaken,
     )

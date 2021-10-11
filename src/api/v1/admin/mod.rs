@@ -15,33 +15,38 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 use actix_web::web::ServiceConfig;
-use uuid::Uuid;
 
-pub mod admin;
-pub mod bench;
-mod meta;
-pub mod routes;
-pub use routes::ROUTES;
+pub mod account;
+pub mod auth;
+#[cfg(test)]
+mod tests;
+
+pub use super::{get_random, get_uuid};
 
 pub fn services(cfg: &mut ServiceConfig) {
-    meta::services(cfg);
-    bench::services(cfg);
-    admin::services(cfg);
+    auth::services(cfg);
+    account::services(cfg);
 }
 
-pub fn get_random(len: usize) -> String {
-    use rand::{distributions::Alphanumeric, rngs::ThreadRng, thread_rng, Rng};
-    use std::iter;
-
-    let mut rng: ThreadRng = thread_rng();
-
-    iter::repeat(())
-        .map(|()| rng.sample(Alphanumeric))
-        .map(char::from)
-        .take(len)
-        .collect::<String>()
+pub fn get_admin_check_login() -> crate::CheckLogin {
+    crate::CheckLogin::new(crate::V1_API_ROUTES.admin.auth.register)
 }
 
-pub fn get_uuid() -> Uuid {
-    Uuid::new_v4()
+pub mod routes {
+    use super::account::routes::Account;
+    use super::auth::routes::Auth;
+
+    pub struct Admin {
+        pub auth: Auth,
+        pub account: Account,
+    }
+
+    impl Admin {
+        pub const fn new() -> Admin {
+            Admin {
+                account: Account::new(),
+                auth: Auth::new(),
+            }
+        }
+    }
 }

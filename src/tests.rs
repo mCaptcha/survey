@@ -22,7 +22,7 @@ use actix_web::{dev::ServiceResponse, error::ResponseError, http::StatusCode};
 use serde::Serialize;
 
 use super::*;
-use crate::api::v1::auth::runners::{Login, Register};
+use crate::api::v1::admin::auth::runners::{Login, Register};
 use crate::data::Data;
 use crate::errors::*;
 use crate::V1_API_ROUTES;
@@ -121,7 +121,7 @@ pub async fn register(name: &str, email: &str, password: &str) {
     };
     let resp = test::call_service(
         &app,
-        post_request!(&msg, V1_API_ROUTES.auth.register).to_request(),
+        post_request!(&msg, V1_API_ROUTES.admin.auth.register).to_request(),
     )
     .await;
     assert_eq!(resp.status(), StatusCode::OK);
@@ -139,7 +139,7 @@ pub async fn signin(name: &str, password: &str) -> (Arc<Data>, Login, ServiceRes
     };
     let signin_resp = test::call_service(
         &app,
-        post_request!(&creds, V1_API_ROUTES.auth.login).to_request(),
+        post_request!(&creds, V1_API_ROUTES.admin.auth.login).to_request(),
     )
     .await;
     assert_eq!(signin_resp.status(), StatusCode::OK);

@@ -24,71 +24,87 @@ use super::{AccountCheckPayload, AccountCheckResp};
 use crate::errors::*;
 use crate::AppData;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Email {
-    pub email: String,
-}
-
-#[my_codegen::post(path = "crate::V1_API_ROUTES.account.email_exists")]
-pub async fn email_exists(
+#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.account.username_exists")]
+async fn username_exists(
     payload: web::Json<AccountCheckPayload>,
     data: AppData,
 ) -> ServiceResult<impl Responder> {
-    let res = sqlx::query!(
-        "SELECT EXISTS (SELECT 1 from survey_admins WHERE email = $1)",
-        &payload.val,
-    )
-    .fetch_one(&data.db)
-    .await?;
-
-    let mut resp = AccountCheckResp { exists: false };
-
-    if let Some(x) = res.exists {
-        if x {
-            resp.exists = true;
-        }
-    }
-
+    let resp = runners::username_exists(&payload, &data).await?;
     Ok(HttpResponse::Ok().json(resp))
 }
 
-/// update email
+pub mod runners {
+    use super::*;
+
+    pub async fn username_exists(
+        payload: &AccountCheckPayload,
+        data: &AppData,
+    ) -> ServiceResult<AccountCheckResp> {
+        let res = sqlx::query!(
+            "SELECT EXISTS (SELECT 1 from survey_admins WHERE name = $1)",
+            &payload.val,
+        )
+        .fetch_one(&data.db)
+        .await?;
+
+        let mut resp = AccountCheckResp { exists: false };
+
+        if let Some(x) = res.exists {
+            if x {
+                resp.exists = true;
+            }
+        }
+
+        Ok(resp)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Username {
+    pub username: String,
+}
+
+/// update username
 #[my_codegen::post(
-    path = "crate::V1_API_ROUTES.account.update_email",
-    wrap = "crate::api::v1::get_admin_check_login()"
+    path = "crate::V1_API_ROUTES.admin.account.update_username",
+    wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]
-async fn set_email(
+async fn set_username(
     id: Identity,
-    payload: web::Json<Email>,
+    payload: web::Json<Username>,
     data: AppData,
 ) -> ServiceResult<impl Responder> {
     let username = id.identity().unwrap();
 
-    data.creds.email(&payload.email)?;
+    let processed_uname = data.creds.username(&payload.username)?;
 
     let res = sqlx::query!(
-        "UPDATE survey_admins set email = $1
+        "UPDATE survey_admins set name = $1
         WHERE name = $2",
-        &payload.email,
+        &processed_uname,
         &username,
     )
     .execute(&data.db)
     .await;
+
     if res.is_err() {
         if let Err(sqlx::Error::Database(err)) = res {
             if err.code() == Some(Cow::from("23505"))
-                && err.message().contains("survey_admins_email_key")
+                && err.message().contains("survey_admins_name_key")
             {
-                return Err(ServiceError::EmailTaken);
+                return Err(ServiceError::UsernameTaken);
             } else {
                 return Err(sqlx::Error::Database(err).into());
             }
         };
     }
+    id.forget();
+    id.remember(processed_uname);
+
     Ok(HttpResponse::Ok())
 }
 
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
-    cfg.service(email_exists);
-    cfg.service(set_email);
+    cfg.service(username_exists);
+    cfg.service(set_username);
 }

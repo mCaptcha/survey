@@ -14,16 +14,14 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-use super::account::routes::Account;
-use super::auth::routes::Auth;
+use super::admin::routes::Admin;
 use super::bench::routes::Benches;
 use super::meta::routes::Meta;
 
 pub const ROUTES: Routes = Routes::new();
 
 pub struct Routes {
-    pub auth: Auth,
-    pub account: Account,
+    pub admin: Admin,
     pub meta: Meta,
     pub benches: Benches,
 }
@@ -31,8 +29,7 @@ pub struct Routes {
 impl Routes {
     const fn new() -> Routes {
         Routes {
-            account: Account::new(),
-            auth: Auth::new(),
+            admin: Admin::new(),
             meta: Meta::new(),
             benches: Benches::new(),
         }

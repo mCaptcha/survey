@@ -37,7 +37,7 @@ pub mod routes {
 
     impl Benches {
         pub const fn new() -> Benches {
-            let submit = "/api/v1/benches/submit";
+            let submit = "/api/v1/benches/{campaign_id}/submit";
             let register = "/api/v1/benches/register";
             let scope = "/api/v1/benches/";
             Benches {
@@ -45,6 +45,9 @@ pub mod routes {
                 register,
                 scope,
             }
+        }
+        pub fn submit_route(&self, campaign_id: &str) -> String {
+            self.submit.replace("{campaign_id}", &campaign_id)
         }
     }
 }
@@ -128,8 +131,11 @@ async fn submit(
     data: AppData,
     id: Identity,
     payload: web::Json<Submission>,
+    path: web::Path<String>,
 ) -> ServiceResult<impl Responder> {
     let username = id.identity().unwrap();
+    let path = path.into_inner();
+    let campaign_id = Uuid::parse_str(&path).map_err(|_| ServiceError::NotAnId)?;
 
     let user_id = Uuid::from_str(&username).unwrap();
     let payload = payload.into_inner();
@@ -137,11 +143,13 @@ async fn submit(
     sqlx::query!(
         "INSERT INTO survey_responses (
                         user_id, 
+                        campaign_id,
                         device_user_provided,
                         device_software_recognised,
                         threads
-                    ) VALUES ($1, $2, $3, $4);",
+                    ) VALUES ($1, $2, $3, $4, $5);",
         &user_id,
+        &campaign_id,
         &payload.device_user_provided,
         &payload.device_software_recognised,
         &payload.threads

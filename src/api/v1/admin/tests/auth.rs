@@ -18,7 +18,7 @@
 use actix_web::http::{header, StatusCode};
 use actix_web::test;
 
-use crate::api::v1::auth::runners::{Login, Register};
+use crate::api::v1::admin::auth::runners::{Login, Register};
 use crate::api::v1::ROUTES;
 use crate::data::Data;
 use crate::errors::*;
@@ -44,9 +44,11 @@ async fn auth_works() {
         confirm_password: PASSWORD.into(),
         email: None,
     };
-    let resp =
-        test::call_service(&app, post_request!(&msg, ROUTES.auth.register).to_request())
-            .await;
+    let resp = test::call_service(
+        &app,
+        post_request!(&msg, ROUTES.admin.auth.register).to_request(),
+    )
+    .await;
     assert_eq!(resp.status(), StatusCode::OK);
     // delete user
     delete_user(NAME, &data).await;
@@ -68,7 +70,7 @@ async fn auth_works() {
     bad_post_req_test(
         NAME,
         PASSWORD,
-        ROUTES.auth.register,
+        ROUTES.admin.auth.register,
         &msg,
         ServiceError::UsernameTaken,
     )
@@ -79,7 +81,7 @@ async fn auth_works() {
     bad_post_req_test(
         NAME,
         PASSWORD,
-        ROUTES.auth.register,
+        ROUTES.admin.auth.register,
         &msg,
         ServiceError::EmailTaken,
     )
@@ -93,7 +95,7 @@ async fn auth_works() {
     bad_post_req_test(
         NAME,
         PASSWORD,
-        ROUTES.auth.login,
+        ROUTES.admin.auth.login,
         &creds,
         ServiceError::AccountNotFound,
     )
@@ -103,7 +105,7 @@ async fn auth_works() {
     bad_post_req_test(
         NAME,
         PASSWORD,
-        ROUTES.auth.login,
+        ROUTES.admin.auth.login,
         &creds,
         ServiceError::AccountNotFound,
     )
@@ -116,7 +118,7 @@ async fn auth_works() {
     bad_post_req_test(
         NAME,
         PASSWORD,
-        ROUTES.auth.login,
+        ROUTES.admin.auth.login,
         &creds,
         ServiceError::WrongPassword,
     )
@@ -126,7 +128,7 @@ async fn auth_works() {
     let signout_resp = test::call_service(
         &app,
         test::TestRequest::get()
-            .uri(ROUTES.auth.logout)
+            .uri(ROUTES.admin.auth.logout)
             .cookie(cookies)
             .to_request(),
     )
@@ -135,7 +137,7 @@ async fn auth_works() {
     let headers = signout_resp.headers();
     assert_eq!(
         headers.get(header::LOCATION).unwrap(),
-        crate::middleware::auth::AUTH
+        crate::V1_API_ROUTES.admin.auth.register,
     )
 }
 
@@ -159,7 +161,7 @@ async fn serverside_password_validation_works() {
     };
     let resp = test::call_service(
         &app,
-        post_request!(&register_msg, ROUTES.auth.register).to_request(),
+        post_request!(&register_msg, ROUTES.admin.auth.register).to_request(),
     )
     .await;
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);

@@ -142,7 +142,7 @@ pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
     let cookie_secret = &SETTINGS.server.cookie_secret;
     IdentityService::new(
         CookieIdentityPolicy::new(cookie_secret.as_bytes())
-            .path("/admin")
+            .path("/api/v1/admin")
             .name("survey-auth")
             .max_age_secs(60 * 24)
             .domain(&SETTINGS.server.domain)

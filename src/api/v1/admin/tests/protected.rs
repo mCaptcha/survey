@@ -29,12 +29,6 @@ async fn protected_routes_work() {
     const PASSWORD: &str = "longpassword2";
     const EMAIL: &str = "testuser119@a.com2";
 
-    let _post_protected_urls = [
-        "/api/v1/account/secret/",
-        "/api/v1/account/email/",
-        "/api/v1/account/delete",
-    ];
-
     let get_protected_urls = ["/logout"];
 
     {
@@ -61,7 +55,7 @@ async fn protected_routes_work() {
         )
         .await;
 
-        if url == &V1_API_ROUTES.auth.logout {
+        if url == &V1_API_ROUTES.admin.auth.logout {
             assert_eq!(authenticated_resp.status(), StatusCode::FOUND);
         } else {
             assert_eq!(authenticated_resp.status(), StatusCode::OK);

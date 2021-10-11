@@ -24,8 +24,6 @@ use actix_web::{http, Error, FromRequest, HttpResponse};
 
 use futures::future::{ok, Either, Ready};
 
-pub const AUTH: &str = crate::V1_API_ROUTES.auth.register;
-
 pub struct CheckLogin {
     login: &'static str,
 }
