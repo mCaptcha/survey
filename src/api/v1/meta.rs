@@ -103,22 +103,22 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::OK);
     }
 
-    //    #[actix_rt::test]
-    //    async fn health_works() {
-    //        println!("{}", V1_API_ROUTES.meta.health);
-    //        let data = Data::new().await;
-    //        let app = get_app!(data).await;
-    //
-    //        let resp = test::call_service(
-    //            &app,
-    //            test::TestRequest::get()
-    //                .uri(V1_API_ROUTES.meta.health)
-    //                .to_request(),
-    //        )
-    //        .await;
-    //        assert_eq!(resp.status(), StatusCode::OK);
-    //
-    //        let health_resp: Health = test::read_body_json(resp).await;
-    //        assert!(health_resp.db);
-    //    }
+    #[actix_rt::test]
+    async fn health_works() {
+        println!("{}", V1_API_ROUTES.meta.health);
+        let data = Data::new().await;
+        let app = get_app!(data).await;
+
+        let resp = test::call_service(
+            &app,
+            test::TestRequest::get()
+                .uri(V1_API_ROUTES.meta.health)
+                .to_request(),
+        )
+        .await;
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let health_resp: Health = test::read_body_json(resp).await;
+        assert!(health_resp.db);
+    }
 }

@@ -32,9 +32,9 @@ mod middleware;
 //mod pages;
 mod settings;
 //mod static_assets;
-//#[cfg(test)]
-//#[macro_use]
-//mod tests;
+#[cfg(test)]
+#[macro_use]
+mod tests;
 
 pub use crate::data::Data;
 pub use api::v1::ROUTES as V1_API_ROUTES;

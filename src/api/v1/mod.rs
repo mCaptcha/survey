@@ -17,16 +17,20 @@
 use actix_web::web::ServiceConfig;
 use uuid::Uuid;
 
+pub mod account;
 pub mod auth;
 pub mod bench;
 mod meta;
 pub mod routes;
 pub use routes::ROUTES;
+#[cfg(test)]
+mod tests;
 
 pub fn services(cfg: &mut ServiceConfig) {
     meta::services(cfg);
     auth::services(cfg);
     bench::services(cfg);
+    account::services(cfg);
 }
 
 pub fn get_random(len: usize) -> String {
@@ -44,4 +48,8 @@ pub fn get_random(len: usize) -> String {
 
 pub fn get_uuid() -> Uuid {
     Uuid::new_v4()
+}
+
+pub fn get_admin_check_login() -> crate::CheckLogin {
+    crate::CheckLogin::new(crate::V1_API_ROUTES.auth.register)
 }

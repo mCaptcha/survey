@@ -221,11 +221,10 @@ async fn login(
     id.remember(username);
     Ok(HttpResponse::Ok())
 }
-fn get_check_login() -> crate::CheckLogin {
-    crate::CheckLogin::new(crate::V1_API_ROUTES.auth.register)
-}
-
-#[my_codegen::get(path = "crate::V1_API_ROUTES.auth.logout", wrap = "get_check_login()")]
+#[my_codegen::get(
+    path = "crate::V1_API_ROUTES.auth.logout",
+    wrap = "crate::api::v1::get_admin_check_login()"
+)]
 async fn signout(id: Identity) -> impl Responder {
     if id.identity().is_some() {
         id.forget();
