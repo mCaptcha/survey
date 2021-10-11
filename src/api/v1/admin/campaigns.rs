@@ -45,23 +45,25 @@ pub mod runners {
 
     pub async fn add_runner(
         username: &str,
-        payload: &AddCapmaign,
+        payload: &mut AddCapmaign,
         data: &AppData,
     ) -> ServiceResult<uuid::Uuid> {
         let mut uuid;
         let now = OffsetDateTime::now_utc();
+
+        payload.difficulties.sort();
 
         loop {
             uuid = get_uuid();
 
             let res = sqlx::query!(
                 "
-INSERT INTO survey_campaigns (
-    user_id, ID, name, difficulties, created_at
-    ) VALUES(
-        (SELECT id FROM survey_admins WHERE name = $1),
-        $2, $3, $4, $5
-    );",
+                INSERT INTO survey_campaigns (
+                    user_id, ID, name, difficulties, created_at
+                    ) VALUES(
+                        (SELECT id FROM survey_admins WHERE name = $1),
+                        $2, $3, $4, $5
+                    );",
                 username,
                 &uuid,
                 &payload.name,
@@ -89,13 +91,19 @@ INSERT INTO survey_campaigns (
 
 #[derive(Serialize, Deserialize)]
 pub struct AddCapmaign {
-    name: String,
-    difficulties: Vec<i32>,
+    pub name: String,
+    pub difficulties: Vec<i32>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AddCapmaignResp {
+    pub campaign_id: String,
 }
 
 pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(add);
 }
+
 #[my_codegen::post(path = "crate::V1_API_ROUTES.admin.campaign.add")]
 async fn add(
     payload: web::Json<AddCapmaign>,
@@ -103,7 +111,82 @@ async fn add(
     id: Identity,
 ) -> ServiceResult<impl Responder> {
     let username = id.identity().unwrap();
-    let payload = payload.into_inner();
-    let _campaign_id = runners::add_runner(&username, &payload, &data).await?;
-    Ok(HttpResponse::Ok())
+    let mut payload = payload.into_inner();
+    let campaign_id = runners::add_runner(&username, &mut payload, &data).await?;
+    let resp = AddCapmaignResp {
+        campaign_id: campaign_id.to_string(),
+    };
+    Ok(HttpResponse::Ok().json(resp))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::api::v1::bench::{Bench, BenchConfig, Submission, SubmissionProof};
+    use crate::data::Data;
+    use crate::tests::*;
+    use crate::*;
+
+    #[actix_rt::test]
+    async fn test_add_campaign() {
+        const NAME: &str = "testadminuser";
+        const EMAIL: &str = "testuserupda@testadminuser.com";
+        const PASSWORD: &str = "longpassword2";
+
+        const DEVICE_USER_PROVIDED: &str = "foo";
+        const DEVICE_SOFTWARE_RECOGNISED: &str = "Foobar.v2";
+        const THREADS: i32 = 4;
+
+        let benches = vec![
+            Bench {
+                difficulty: 1,
+                duration: 1.00,
+            },
+            Bench {
+                difficulty: 2,
+                duration: 2.00,
+            },
+            Bench {
+                difficulty: 3,
+                duration: 3.00,
+            },
+            Bench {
+                difficulty: 4,
+                duration: 4.00,
+            },
+            Bench {
+                difficulty: 5,
+                duration: 5.00,
+            },
+        ];
+
+        {
+            let data = Data::new().await;
+            delete_user(NAME, &data).await;
+        }
+
+        let (data, _creds, signin_resp) =
+            register_and_signin(NAME, EMAIL, PASSWORD).await;
+        let cookies = get_cookie!(signin_resp);
+        let survey = get_survey_user(data.clone()).await;
+        let survey_cookie = get_cookie!(survey);
+        //        let app = get_app!(data).await;
+
+        let campaign = create_new_campaign(NAME, data.clone(), cookies.clone()).await;
+        let campaign_config =
+            get_campaign_config(&campaign, data.clone(), survey_cookie.clone()).await;
+
+        assert_eq!(DIFFICULTIES.to_vec(), campaign_config.difficulties);
+
+        let submit_payload = Submission {
+            device_user_provided: DEVICE_USER_PROVIDED.into(),
+            device_software_recognised: DEVICE_SOFTWARE_RECOGNISED.into(),
+            threads: THREADS,
+            benches: benches.clone(),
+        };
+
+        let _proof =
+            submit_bench(&submit_payload, &campaign, survey_cookie, data.clone()).await;
+    }
 }

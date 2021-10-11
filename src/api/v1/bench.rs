@@ -99,31 +99,31 @@ pub mod runners {
     }
 }
 
-#[my_codegen::post(path = "crate::V1_API_ROUTES.benches.register")]
+#[my_codegen::get(path = "crate::V1_API_ROUTES.benches.register")]
 async fn register(data: AppData, id: Identity) -> ServiceResult<impl Responder> {
     let uuid = runners::register_runner(&data).await?;
     id.remember(uuid.to_string());
     Ok(HttpResponse::Ok())
 }
 
-#[derive(Serialize, Deserialize)]
-struct Bench {
-    duration: f32,
-    difficulty: i32,
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Bench {
+    pub duration: f32,
+    pub difficulty: i32,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Submission {
-    device_user_provided: String,
-    device_software_recognised: String,
-    threads: i32,
-    benches: Vec<Bench>,
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Submission {
+    pub device_user_provided: String,
+    pub device_software_recognised: String,
+    pub threads: i32,
+    pub benches: Vec<Bench>,
 }
 
-#[derive(Serialize, Deserialize)]
-struct SubmissionProof {
-    token: String,
-    proof: String,
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SubmissionProof {
+    pub token: String,
+    pub proof: String,
 }
 
 fn get_check_login() -> crate::CheckLogin {

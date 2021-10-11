@@ -87,22 +87,6 @@
       "nullable": []
     }
   },
-  "3e31af624e06a2261fa85f25b5ec4c62a8408cd7283042e24b2aee2998931426": {
-    "query": "\nINSERT INTO survey_campaigns (\n    user_id, ID, name, difficulties, created_at\n    ) VALUES(\n        (SELECT id FROM survey_admins WHERE name = $1),\n        $2, $3, $4, $5\n    );",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Uuid",
-          "Varchar",
-          "Int4Array",
-          "Timestamptz"
-        ]
-      },
-      "nullable": []
-    }
-  },
   "43b3e771f38bf8059832169227705be06a28925af1b3799ffef5371d511fd138": {
     "query": "\n             INSERT INTO survey_users (created_at, id) VALUES($1, $2)",
     "describe": {
@@ -180,6 +164,22 @@
       "nullable": [
         null
       ]
+    }
+  },
+  "82feafc36533144e49ba374c8c47ca4aa0d6558a9803778ad28cfa7b62382c3e": {
+    "query": "\n                INSERT INTO survey_campaigns (\n                    user_id, ID, name, difficulties, created_at\n                    ) VALUES(\n                        (SELECT id FROM survey_admins WHERE name = $1),\n                        $2, $3, $4, $5\n                    );",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Uuid",
+          "Varchar",
+          "Int4Array",
+          "Timestamptz"
+        ]
+      },
+      "nullable": []
     }
   },
   "8320dda2b3e107d1451fdfb35eb2a4b8e97364e7b1b74ffe4d6913faf132fb61": {

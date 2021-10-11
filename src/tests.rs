@@ -14,15 +14,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::str::FromStr;
 use std::sync::Arc;
 
 use actix_web::cookie::Cookie;
 use actix_web::test;
 use actix_web::{dev::ServiceResponse, error::ResponseError, http::StatusCode};
 use serde::Serialize;
+use uuid::Uuid;
 
 use super::*;
-use crate::api::v1::admin::auth::runners::{Login, Register};
+use crate::api::v1::admin::{
+    auth::runners::{Login, Register},
+    campaigns::{AddCapmaign, AddCapmaignResp},
+};
+use crate::api::v1::bench::{Bench, BenchConfig, Submission, SubmissionProof};
 use crate::data::Data;
 use crate::errors::*;
 use crate::V1_API_ROUTES;
@@ -91,7 +97,7 @@ macro_rules! get_app {
         test::init_service(get_app!("APP"))
     };
     ($data:expr) => {
-        test::init_service(
+        actix_web::test::init_service(
             get_app!("APP").app_data(actix_web::web::Data::new($data.clone())),
         )
     };
@@ -192,29 +198,62 @@ pub async fn bad_post_req_test<T: Serialize>(
 //    //println!("{}", txt.error);
 //    assert_eq!(resp_err.error, format!("{}", err));
 //}
-//
-//pub async fn create_new_campaign(
-//    campaign_name: &str,
-//    data: Arc<Data>,
-//    cookies: Cookie<'_>,
-//) -> CreateResp {
-//    let new = CreateReq {
-//        name: campaign_name.into(),
-//    };
-//
-//    let app = get_app!(data).await;
-//    let new_resp = test::call_service(
-//        &app,
-//        post_request!(&new, crate::V1_API_ROUTES.campaign.new)
-//            .cookie(cookies)
-//            .to_request(),
-//    )
-//    .await;
-//    assert_eq!(new_resp.status(), StatusCode::OK);
-//    let uuid: CreateResp = test::read_body_json(new_resp).await;
-//    uuid
-//}
-//
+
+pub const DIFFICULTIES: [i32; 5] = [1, 2, 3, 4, 5];
+
+pub async fn create_new_campaign(
+    campaign_name: &str,
+    data: Arc<Data>,
+    cookies: Cookie<'_>,
+) -> AddCapmaignResp {
+    let new = AddCapmaign {
+        name: campaign_name.into(),
+        difficulties: DIFFICULTIES.into(),
+    };
+
+    let app = get_app!(data).await;
+    let new_resp = test::call_service(
+        &app,
+        post_request!(&new, crate::V1_API_ROUTES.admin.campaign.add)
+            .cookie(cookies)
+            .to_request(),
+    )
+    .await;
+    assert_eq!(new_resp.status(), StatusCode::OK);
+    let uuid: AddCapmaignResp = test::read_body_json(new_resp).await;
+    uuid
+}
+
+pub async fn get_survey_user(data: Arc<Data>) -> ServiceResponse {
+    let app = get_app!(data).await;
+    let signin_resp = test::call_service(
+        &app,
+        test::TestRequest::get()
+            .uri(V1_API_ROUTES.benches.register)
+            .to_request(),
+    )
+    .await;
+
+    assert_eq!(signin_resp.status(), StatusCode::OK);
+    signin_resp
+}
+
+pub async fn get_campaign_config(
+    campaign: &AddCapmaignResp,
+    data: Arc<Data>,
+    cookies: Cookie<'_>,
+) -> BenchConfig {
+    let app = get_app!(data).await;
+    let route = V1_API_ROUTES
+        .benches
+        .fetch_routes(&campaign.campaign_id.to_string());
+    let new_resp =
+        test::call_service(&app, post_request!(&route).cookie(cookies).to_request())
+            .await;
+    assert_eq!(new_resp.status(), StatusCode::OK);
+    test::read_body_json(new_resp).await
+}
+
 //pub async fn delete_campaign(
 //    camapign: &CreateResp,
 //    data: Arc<Data>,
@@ -244,22 +283,100 @@ pub async fn bad_post_req_test<T: Serialize>(
 //    test::read_body_json(list_resp).await
 //}
 //
-//pub async fn add_feedback(
-//    rating: &RatingReq,
-//    campaign: &CreateResp,
-//    data: Arc<Data>,
-//) -> RatingResp {
-//    let add_feedback_route = V1_API_ROUTES.feedback.add_feedback_route(&campaign.uuid);
-//    let app = get_app!(data).await;
-//    let add_feedback_resp = test::call_service(
-//        &app,
-//        post_request!(&rating, &add_feedback_route).to_request(),
-//    )
-//    .await;
-//    assert_eq!(add_feedback_resp.status(), StatusCode::OK);
-//
-//    test::read_body_json(add_feedback_resp).await
-//}
+pub async fn submit_bench(
+    payload: &Submission,
+    campaign: &AddCapmaignResp,
+    cookies: Cookie<'_>,
+    data: Arc<Data>,
+) -> SubmissionProof {
+    let route = V1_API_ROUTES.benches.submit_route(&campaign.campaign_id);
+    let app = get_app!(data).await;
+    let add_feedback_resp = test::call_service(
+        &app,
+        post_request!(&payload, &route).cookie(cookies).to_request(),
+    )
+    .await;
+    assert_eq!(add_feedback_resp.status(), StatusCode::OK);
+
+    let proof: SubmissionProof = test::read_body_json(add_feedback_resp).await;
+
+    let survey_user_id = Uuid::from_str(&proof.token).unwrap();
+    let proof_uuid = Uuid::from_str(&proof.proof).unwrap();
+
+    struct Exists {
+        exists: Option<bool>,
+    }
+    let res = sqlx::query_as!(
+        Exists,
+        "SELECT EXISTS (
+                SELECT 1 from survey_responses 
+                WHERE device_software_recognised = $1
+                AND device_user_provided = $2
+                AND THREADS = $3
+                AND user_id = $4
+                );",
+        &payload.device_software_recognised,
+        &payload.device_user_provided,
+        payload.threads,
+        &survey_user_id,
+    )
+    .fetch_one(&data.db)
+    .await
+    .unwrap();
+    assert!(res.exists.as_ref().unwrap());
+
+    let res = sqlx::query_as!(
+        Exists,
+        "SELECT EXISTS (
+                SELECT 1 from survey_response_tokens 
+                WHERE id = $1
+                );",
+        &proof_uuid
+    )
+    .fetch_one(&data.db)
+    .await
+    .unwrap();
+    assert!(res.exists.as_ref().unwrap());
+
+    struct ID {
+        id: i32,
+    }
+
+    let resp_id = sqlx::query_as!(
+        ID,
+        "SELECT ID 
+         FROM survey_responses 
+         WHERE 
+             user_id = $1 
+         AND 
+             device_software_recognised = $2;",
+        &survey_user_id,
+        &payload.device_software_recognised
+    )
+    .fetch_one(&data.db)
+    .await
+    .unwrap();
+
+    for bench in payload.benches.iter() {
+        let res = sqlx::query_as!(
+            Exists,
+            "SELECT EXISTS( 
+            SELECT 1 FROM survey_benches 
+            WHERE resp_id = $1
+            AND difficulty = $2
+            AND duration = $3);",
+            &resp_id.id,
+            &bench.difficulty,
+            bench.duration
+        )
+        .fetch_one(&data.db)
+        .await
+        .unwrap();
+        assert!(res.exists.as_ref().unwrap());
+    }
+
+    proof
+}
 //
 //pub async fn get_feedback(
 //    campaign: &CreateResp,
