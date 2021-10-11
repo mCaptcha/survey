@@ -103,6 +103,7 @@ async fn main() -> std::io::Result<()> {
                     .header("Permissions-Policy", "interest-cohort=()"),
             )
             .wrap(get_identity_service())
+            .wrap(get_survey_identity_service())
             .wrap(actix_middleware::NormalizePath::new(
                 actix_middleware::TrailingSlash::Trim,
             ))
@@ -124,17 +125,31 @@ pub fn get_json_err() -> JsonConfig {
 }
 
 #[cfg(not(tarpaulin_include))]
-pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
+pub fn get_survey_identity_service() -> IdentityService<CookieIdentityPolicy> {
     let cookie_secret = &SETTINGS.server.cookie_secret;
     IdentityService::new(
         CookieIdentityPolicy::new(cookie_secret.as_bytes())
             .name("survey-id")
-            //TODO change cookie age
-            .max_age_secs(216000)
+            .path(V1_API_ROUTES.benches.scope)
+            .max_age_secs(30 * 60)
             .domain(&SETTINGS.server.domain)
             .secure(false),
     )
 }
+
+#[cfg(not(tarpaulin_include))]
+pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
+    let cookie_secret = &SETTINGS.server.cookie_secret;
+    IdentityService::new(
+        CookieIdentityPolicy::new(cookie_secret.as_bytes())
+            .path("/admin")
+            .name("survey-auth")
+            .max_age_secs(60 * 24)
+            .domain(&SETTINGS.server.domain)
+            .secure(false),
+    )
+}
+
 
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     //pages::services(cfg);

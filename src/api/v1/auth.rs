@@ -14,72 +14,221 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-use std::borrow::Cow;
 
 use actix_identity::Identity;
+use actix_web::http::header;
 use actix_web::{web, HttpResponse, Responder};
-use sqlx::types::time::OffsetDateTime;
+use serde::{Deserialize, Serialize};
 
-use super::get_uuid;
+use super::get_random;
 use crate::errors::*;
 use crate::AppData;
 
 pub mod routes {
     pub struct Auth {
+        pub logout: &'static str,
+        pub login: &'static str,
         pub register: &'static str,
     }
 
     impl Auth {
         pub const fn new() -> Auth {
+            let login = "/api/v1/signin";
+            let logout = "/logout";
             let register = "/api/v1/signup";
-            Auth { register }
+            Auth {
+                logout,
+                login,
+                register,
+            }
         }
     }
 }
 
 pub mod runners {
-    //    use std::borrow::Cow;
+    use std::borrow::Cow;
 
     use super::*;
 
-    pub async fn register_runner(data: &AppData) -> ServiceResult<uuid::Uuid> {
-        let mut uuid;
-        let now = OffsetDateTime::now_utc();
+    #[derive(Clone, Debug, Deserialize, Serialize)]
+    pub struct Register {
+        pub username: String,
+        pub password: String,
+        pub confirm_password: String,
+        pub email: Option<String>,
+    }
 
-        loop {
-            uuid = get_uuid();
+    #[derive(Clone, Debug, Deserialize, Serialize)]
+    pub struct Login {
+        // login accepts both username and email under "username field"
+        // TODO update all instances where login is used
+        pub login: String,
+        pub password: String,
+    }
 
-            let res = sqlx::query!(
-                "
-             INSERT INTO survey_users (created_at, id) VALUES($1, $2)",
-                &now,
-                &uuid
+    #[derive(Clone, Debug, Deserialize, Serialize)]
+    pub struct Password {
+        pub password: String,
+    }
+
+    /// returns Ok(()) when everything checks out and the user is authenticated. Erros otherwise
+    pub async fn login_runner(payload: &Login, data: &AppData) -> ServiceResult<String> {
+        use argon2_creds::Config;
+        use sqlx::Error::RowNotFound;
+
+        let verify = |stored: &str, received: &str| {
+            if Config::verify(stored, received)? {
+                Ok(())
+            } else {
+                Err(ServiceError::WrongPassword)
+            }
+        };
+
+        if payload.login.contains('@') {
+            #[derive(Clone, Debug)]
+            struct EmailLogin {
+                name: String,
+                password: String,
+            }
+
+            let email_fut = sqlx::query_as!(
+                EmailLogin,
+                r#"SELECT name, password  FROM survey_admins WHERE email = ($1)"#,
+                &payload.login,
             )
-            .execute(&data.db)
+            .fetch_one(&data.db)
             .await;
 
+            match email_fut {
+                Ok(s) => {
+                    verify(&s.password, &payload.password)?;
+                    Ok(s.name)
+                }
+
+                Err(RowNotFound) => Err(ServiceError::AccountNotFound),
+                Err(_) => Err(ServiceError::InternalServerError),
+            }
+        } else {
+            let username_fut = sqlx::query_as!(
+                Password,
+                r#"SELECT password  FROM survey_admins WHERE name = ($1)"#,
+                &payload.login,
+            )
+            .fetch_one(&data.db)
+            .await;
+
+            match username_fut {
+                Ok(s) => {
+                    verify(&s.password, &payload.password)?;
+                    Ok(payload.login.clone())
+                }
+                Err(RowNotFound) => Err(ServiceError::AccountNotFound),
+                Err(_) => Err(ServiceError::InternalServerError),
+            }
+        }
+    }
+
+    pub async fn register_runner(
+        payload: &Register,
+        data: &AppData,
+    ) -> ServiceResult<()> {
+        if !crate::SETTINGS.allow_registration {
+            return Err(ServiceError::ClosedForRegistration);
+        }
+
+        if payload.password != payload.confirm_password {
+            return Err(ServiceError::PasswordsDontMatch);
+        }
+        let username = data.creds.username(&payload.username)?;
+        let hash = data.creds.password(&payload.password)?;
+
+        if let Some(email) = &payload.email {
+            data.creds.email(email)?;
+        }
+
+        let mut secret;
+
+        loop {
+            secret = get_random(32);
+            let res;
+            if let Some(email) = &payload.email {
+                res = sqlx::query!(
+                    "insert into survey_admins 
+        (name , password, email, secret) values ($1, $2, $3, $4)",
+                    &username,
+                    &hash,
+                    &email,
+                    &secret,
+                )
+                .execute(&data.db)
+                .await;
+            } else {
+                res = sqlx::query!(
+                    "INSERT INTO survey_admins 
+        (name , password,  secret) VALUES ($1, $2, $3)",
+                    &username,
+                    &hash,
+                    &secret,
+                )
+                .execute(&data.db)
+                .await;
+            }
             if res.is_ok() {
                 break;
             } else if let Err(sqlx::Error::Database(err)) = res {
-                if err.code() == Some(Cow::from("23505"))
-                    && err.message().contains("survey_users_id_key")
-                {
-                    continue;
+                if err.code() == Some(Cow::from("23505")) {
+                    let msg = err.message();
+                    if msg.contains("survey_admins_name_key") {
+                        return Err(ServiceError::UsernameTaken);
+                    } else if msg.contains("survey_admins_email_key") {
+                        return Err(ServiceError::EmailTaken);
+                    } else if msg.contains("survey_admins_secret_key") {
+                        continue;
+                    } else {
+                        return Err(ServiceError::InternalServerError);
+                    }
                 } else {
                     return Err(sqlx::Error::Database(err).into());
                 }
-            }
+            };
         }
-        Ok(uuid)
+        Ok(())
     }
 }
 
 pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(register);
+    cfg.service(login);
+    cfg.service(signout);
 }
 #[my_codegen::post(path = "crate::V1_API_ROUTES.auth.register")]
-async fn register(data: AppData, id: Identity) -> ServiceResult<impl Responder> {
-    let uuid = runners::register_runner(&data).await?;
-    id.remember(uuid.to_string());
+async fn register(
+    payload: web::Json<runners::Register>,
+    data: AppData,
+) -> ServiceResult<impl Responder> {
+    runners::register_runner(&payload, &data).await?;
     Ok(HttpResponse::Ok())
 }
+
+#[my_codegen::post(path = "crate::V1_API_ROUTES.auth.login")]
+async fn login(
+    id: Identity,
+    payload: web::Json<runners::Login>,
+    data: AppData,
+) -> ServiceResult<impl Responder> {
+    let payload = payload.into_inner();
+    let username = runners::login_runner(&payload, &data).await?;
+    id.remember(username);
+    Ok(HttpResponse::Ok())
+}
+
+#[my_codegen::get(path = "crate::V1_API_ROUTES.auth.logout", wrap = "crate::CheckLogin")]
+async fn signout(id: Identity) -> impl Responder {
+    if id.identity().is_some() {
+        id.forget();
+    }
+    HttpResponse::Found()
+        .append_header((header::LOCATION, crate::middleware::auth::AUTH))
+        .finish()
+}
+

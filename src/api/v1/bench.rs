@@ -21,6 +21,7 @@ use actix_identity::Identity;
 use actix_web::{web, HttpResponse, Responder};
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
+use sqlx::types::time::OffsetDateTime;
 use uuid::Uuid;
 
 use super::get_uuid;
@@ -30,19 +31,68 @@ use crate::AppData;
 pub mod routes {
     pub struct Benches {
         pub submit: &'static str,
+        pub register: &'static str,
+        pub scope: &'static str,
     }
 
     impl Benches {
         pub const fn new() -> Benches {
-            let submit = "/api/v1/benches";
-            Benches { submit }
+            let submit = "/api/v1/benches/submit";
+            let register = "/api/v1/benches/register";
+            let scope = "/api/v1/benches/";
+            Benches { submit, register, scope }
         }
     }
 }
 
 pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(submit);
+    cfg.service(register);
 }
+
+
+pub mod runners {
+    use super::*;
+
+    pub async fn register_runner(data: &AppData) -> ServiceResult<uuid::Uuid> {
+        let mut uuid;
+        let now = OffsetDateTime::now_utc();
+
+        loop {
+            uuid = get_uuid();
+
+            let res = sqlx::query!(
+                "
+             INSERT INTO survey_users (created_at, id) VALUES($1, $2)",
+                &now,
+                &uuid
+            )
+            .execute(&data.db)
+            .await;
+
+            if res.is_ok() {
+                break;
+            } else if let Err(sqlx::Error::Database(err)) = res {
+                if err.code() == Some(Cow::from("23505"))
+                    && err.message().contains("survey_users_id_key")
+                {
+                    continue;
+                } else {
+                    return Err(sqlx::Error::Database(err).into());
+                }
+            }
+        }
+        Ok(uuid)
+    }
+}
+
+#[my_codegen::post(path = "crate::V1_API_ROUTES.benches.register")]
+async fn register(data: AppData, id: Identity) -> ServiceResult<impl Responder> {
+    let uuid = runners::register_runner(&data).await?;
+    id.remember(uuid.to_string());
+    Ok(HttpResponse::Ok())
+}
+
 
 #[derive(Serialize, Deserialize)]
 struct Bench {

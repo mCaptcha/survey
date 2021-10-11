@@ -1,7 +1,110 @@
 {
   "db": "PostgreSQL",
-  "0d27c6787e145f980063f008266ec00bd96f5a761d6f23bbe2bdc63a5163ba69": {
-    "query": "SELECT ID FROM survey_responses \n     WHERE user_id = $1 AND device_software_recognised = $2",
+  "07dd9f4c2edd99714b3de90365fdae4f874c66a736c308df6e668ef9b86737dc": {
+    "query": "INSERT INTO survey_responses (\n                        user_id, \n                        device_user_provided,\n                        device_software_recognised,\n                        threads\n                    ) VALUES ($1, $2, $3, $4);",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar",
+          "Varchar",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "0d22134cc5076304b7895827f006ee8269cc500f400114a7472b83f0f1c568b5": {
+    "query": "INSERT INTO survey_admins \n        (name , password,  secret) VALUES ($1, $2, $3)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "1373df097fa0e58b23a374753318ae53a44559aa0e7eb64680185baf1c481723": {
+    "query": "SELECT password  FROM survey_admins WHERE name = ($1)",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "password",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "19686bfe8772cbc6831d46d18994e2b9aa40c7181eae9a31e51451cce95f04e8": {
+    "query": "SELECT name, password  FROM survey_admins WHERE email = ($1)",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "password",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "1b7e17bfc949fa97e8dec1f95e35a02bcf3aa1aa72a1f6f6c8884e885fc3b953": {
+    "query": "insert into survey_admins \n        (name , password, email, secret) values ($1, $2, $3, $4)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "43b3e771f38bf8059832169227705be06a28925af1b3799ffef5371d511fd138": {
+    "query": "\n             INSERT INTO survey_users (created_at, id) VALUES($1, $2)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "8320dda2b3e107d1451fdfb35eb2a4b8e97364e7b1b74ffe4d6913faf132fb61": {
+    "query": "SELECT ID \n         FROM survey_responses \n         WHERE \n             user_id = $1 \n         AND \n             device_software_recognised = $2;",
     "describe": {
       "columns": [
         {
@@ -21,37 +124,8 @@
       ]
     }
   },
-  "b50210741c2fa689a8bd7f211a650c6616178f927c2c9320e5b6e25dc7c3cc1a": {
-    "query": "INSERT INTO survey_response_tokens (resp_id, user_id, id)\n    VALUES ($1, $2, $3)",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Int4",
-          "Uuid",
-          "Uuid"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "cbf1bac274a6a1b1339615b406b9127c4f314080450e7bd5a5652f5febfb0d21": {
-    "query": "INSERT INTO survey_responses (user_id, device_user_provided, device_software_recognised,\n     threads) VALUES ($1, $2, $3, $4)",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Varchar",
-          "Varchar",
-          "Int4"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "d958feaec808739d8fddc2d6a3b560fae2e5aa496c44b24a6f70e73ebb291568": {
-    "query": "INSERT INTO survey_benches \n                (resp_id, difficulty, duration) VALUES ($1, $2, $3)",
+  "a721cfa249acf328c2f29c4cf8c2aeba1a635bcf49d18ced5474caa10b7cae4f": {
+    "query": "INSERT INTO survey_benches \n                (resp_id, difficulty, duration) \n            VALUES ($1, $2, $3);",
     "describe": {
       "columns": [],
       "parameters": {
@@ -59,6 +133,20 @@
           "Int4",
           "Int4",
           "Float4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "fcdc5fe5d496eb516c805e64ec96d9626b74ab33cd6e75e5a08ae88967403b72": {
+    "query": "INSERT INTO survey_response_tokens \n            (resp_id, user_id, id)\n            VALUES ($1, $2, $3);",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Uuid",
+          "Uuid"
         ]
       },
       "nullable": []

@@ -17,6 +17,8 @@
 use std::convert::From;
 
 use actix::MailboxError;
+use argon2_creds::errors::CredsError;
+
 use actix_web::{
     error::ResponseError,
     http::{header, StatusCode},
@@ -39,14 +41,47 @@ pub enum ServiceError {
     #[display(fmt = "Username not available")]
     UsernameTaken,
 
+    #[display(
+        fmt = "This server is is closed for registration. Contact admin if this is unexpecter"
+    )]
+    ClosedForRegistration,
+
     /// email is already taken
     #[display(fmt = "Email not available")]
     EmailTaken,
+
+    #[display(fmt = "The value you entered for email is not an email")] //405j
+    NotAnEmail,
 
     /// when the a token name is already taken
     /// token not found
     #[display(fmt = "Token not found. Is token registered?")]
     TokenNotFound,
+
+    #[display(fmt = "Wrong password")]
+    WrongPassword,
+    #[display(fmt = "Account not found")]
+    AccountNotFound,
+
+    /// when the value passed contains profainity
+    #[display(fmt = "Can't allow profanity in usernames")]
+    ProfainityError,
+    /// when the value passed contains blacklisted words
+    /// see [blacklist](https://github.com/shuttlecraft/The-Big-Username-Blacklist)
+    #[display(fmt = "Username contains blacklisted words")]
+    BlacklistError,
+    /// when the value passed contains characters not present
+    /// in [UsernameCaseMapped](https://tools.ietf.org/html/rfc8265#page-7)
+    /// profile
+    #[display(fmt = "username_case_mapped violation")]
+    UsernameCaseMappedError,
+
+    #[display(fmt = "Passsword too short")]
+    PasswordTooShort,
+    #[display(fmt = "Username too long")]
+    PasswordTooLong,
+    #[display(fmt = "Passwords don't match")]
+    PasswordsDontMatch,
 
     #[display(fmt = "{}", _0)]
     CaptchaError(CaptchaError),
@@ -76,10 +111,22 @@ impl ResponseError for ServiceError {
     #[cfg(not(tarpaulin_include))]
     fn status_code(&self) -> StatusCode {
         match self {
+            ServiceError::ClosedForRegistration => StatusCode::FORBIDDEN,
             ServiceError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
 
             ServiceError::UsernameTaken => StatusCode::BAD_REQUEST,
             ServiceError::EmailTaken => StatusCode::BAD_REQUEST,
+            ServiceError::NotAnEmail => StatusCode::BAD_REQUEST,
+            ServiceError::WrongPassword => StatusCode::UNAUTHORIZED,
+            ServiceError::AccountNotFound => StatusCode::NOT_FOUND,
+
+            ServiceError::ProfainityError => StatusCode::BAD_REQUEST,
+            ServiceError::BlacklistError => StatusCode::BAD_REQUEST,
+            ServiceError::UsernameCaseMappedError => StatusCode::BAD_REQUEST,
+
+            ServiceError::PasswordTooShort => StatusCode::BAD_REQUEST,
+            ServiceError::PasswordTooLong => StatusCode::BAD_REQUEST,
+            ServiceError::PasswordsDontMatch => StatusCode::BAD_REQUEST,
 
             ServiceError::TokenNotFound => StatusCode::NOT_FOUND,
             ServiceError::CaptchaError(e) => {
@@ -108,6 +155,21 @@ impl From<sqlx::Error> for ServiceError {
         // use std::borrow::Cow;
 
         ServiceError::InternalServerError
+    }
+}
+
+impl From<CredsError> for ServiceError {
+    #[cfg(not(tarpaulin_include))]
+    fn from(e: CredsError) -> ServiceError {
+        match e {
+            CredsError::UsernameCaseMappedError => ServiceError::UsernameCaseMappedError,
+            CredsError::ProfainityError => ServiceError::ProfainityError,
+            CredsError::BlacklistError => ServiceError::BlacklistError,
+            CredsError::NotAnEmail => ServiceError::NotAnEmail,
+            CredsError::Argon2Error(_) => ServiceError::InternalServerError,
+            CredsError::PasswordTooLong => ServiceError::PasswordTooLong,
+            CredsError::PasswordTooShort => ServiceError::PasswordTooShort,
+        }
     }
 }
 
