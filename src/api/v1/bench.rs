@@ -32,22 +32,28 @@ pub mod routes {
     pub struct Benches {
         pub submit: &'static str,
         pub register: &'static str,
+        pub fetch: &'static str,
         pub scope: &'static str,
     }
 
     impl Benches {
         pub const fn new() -> Benches {
             let submit = "/api/v1/benches/{campaign_id}/submit";
+            let fetch = "/api/v1/benches/{campaign_id}/fetch";
             let register = "/api/v1/benches/register";
             let scope = "/api/v1/benches/";
             Benches {
                 submit,
                 register,
+                fetch,
                 scope,
             }
         }
         pub fn submit_route(&self, campaign_id: &str) -> String {
             self.submit.replace("{campaign_id}", &campaign_id)
+        }
+        pub fn fetch_routes(&self, campaign_id: &str) -> String {
+            self.fetch.replace("{campaign_id}", &campaign_id)
         }
     }
 }
@@ -55,6 +61,7 @@ pub mod routes {
 pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(submit);
     cfg.service(register);
+    cfg.service(fetch);
 }
 
 pub mod runners {
@@ -227,4 +234,27 @@ async fn submit(
     };
 
     Ok(HttpResponse::Ok().json(resp))
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BenchConfig {
+    pub difficulties: Vec<i32>,
+}
+
+#[my_codegen::post(
+    path = "crate::V1_API_ROUTES.benches.fetch",
+    wrap = "get_check_login()"
+)]
+async fn fetch(data: AppData, path: web::Path<String>) -> ServiceResult<impl Responder> {
+    let path = path.into_inner();
+    let campaign_id = Uuid::parse_str(&path).map_err(|_| ServiceError::NotAnId)?;
+
+    let config = sqlx::query_as!(
+        BenchConfig,
+        "SELECT difficulties FROM survey_campaigns WHERE id = $1;",
+        &campaign_id,
+    )
+    .fetch_one(&data.db)
+    .await?;
+    Ok(HttpResponse::Ok().json(config))
 }

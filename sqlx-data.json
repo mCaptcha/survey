@@ -203,6 +203,26 @@
       ]
     }
   },
+  "9cdade613ce724631cc3f187510758ee0929e93ff3f8ce81fe35594756644246": {
+    "query": "SELECT difficulties FROM survey_campaigns WHERE id = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "difficulties",
+          "type_info": "Int4Array"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
   "a721cfa249acf328c2f29c4cf8c2aeba1a635bcf49d18ced5474caa10b7cae4f": {
     "query": "INSERT INTO survey_benches \n                (resp_id, difficulty, duration) \n            VALUES ($1, $2, $3);",
     "describe": {

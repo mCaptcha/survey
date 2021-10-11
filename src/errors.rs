@@ -28,8 +28,6 @@ use derive_more::{Display, Error};
 use libmcaptcha::errors::CaptchaError;
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot::error::RecvError;
-use url::ParseError;
-use validator::ValidationErrors;
 
 #[derive(Debug, Display, PartialEq, Error)]
 #[cfg(not(tarpaulin_include))]
@@ -56,11 +54,6 @@ pub enum ServiceError {
     #[display(fmt = "The value you entered for campaign id is not a valid campaign ID")]
     //405j
     NotAnId,
-
-    /// when the a token name is already taken
-    /// token not found
-    #[display(fmt = "Token not found. Is token registered?")]
-    TokenNotFound,
 
     #[display(fmt = "Wrong password")]
     WrongPassword,
@@ -109,7 +102,6 @@ impl ResponseError for ServiceError {
                 })
                 .unwrap(),
             )
-            .into()
     }
 
     #[cfg(not(tarpaulin_include))]
@@ -133,7 +125,6 @@ impl ResponseError for ServiceError {
             ServiceError::PasswordTooLong => StatusCode::BAD_REQUEST,
             ServiceError::PasswordsDontMatch => StatusCode::BAD_REQUEST,
 
-            ServiceError::TokenNotFound => StatusCode::NOT_FOUND,
             ServiceError::CaptchaError(e) => {
                 log::error!("{}", e);
                 match e {
@@ -155,10 +146,7 @@ impl From<CaptchaError> for ServiceError {
 #[cfg(not(tarpaulin_include))]
 impl From<sqlx::Error> for ServiceError {
     #[cfg(not(tarpaulin_include))]
-    fn from(e: sqlx::Error) -> Self {
-        // use sqlx::error::Error;
-        // use std::borrow::Cow;
-
+    fn from(_: sqlx::Error) -> Self {
         ServiceError::InternalServerError
     }
 }

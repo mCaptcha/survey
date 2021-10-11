@@ -27,6 +27,7 @@ pub use super::{get_random, get_uuid};
 pub fn services(cfg: &mut ServiceConfig) {
     auth::services(cfg);
     account::services(cfg);
+    campaigns::services(cfg);
 }
 
 pub fn get_admin_check_login() -> crate::CheckLogin {
