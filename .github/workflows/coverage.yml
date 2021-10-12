@@ -52,7 +52,7 @@ jobs:
           profile: minimal
           override: true
 
-      - name: build sass
+      - name: build frtontend assets
         run: make frontend
 
       - name: Run migrations

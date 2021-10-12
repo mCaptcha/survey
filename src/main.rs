@@ -51,6 +51,9 @@ lazy_static! {
 //
 //    pub static ref CSS: &'static str =
 //        FILES.get("./static/cache/bundle/css/main.css").unwrap();
+    pub static ref JS: &'static str =
+        FILES.get("./static/cache/bundle/bundle.js").unwrap();
+
     /// points to source files matching build commit
     pub static ref SOURCE_FILES_OF_INSTANCE: String = {
         let mut url = SETTINGS.source_code.clone();

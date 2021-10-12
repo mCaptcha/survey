@@ -1,0 +1,24 @@
+{
+  "name": "mcaptcha-browser",
+  "collaborators": [
+    "realaravinth <realaravinth@batsense.net>"
+  ],
+  "description": "mCaptcha client library for the web",
+  "version": "0.1.0",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mCaptcha/browser"
+  },
+  "files": [
+    "mcaptcha_browser_bg.wasm",
+    "mcaptcha_browser.js",
+    "mcaptcha_browser_bg.js",
+    "mcaptcha_browser.d.ts",
+    "LICENSE_APACHE",
+    "LICENSE_MIT"
+  ],
+  "module": "mcaptcha_browser.js",
+  "types": "mcaptcha_browser.d.ts",
+  "sideEffects": false
+}

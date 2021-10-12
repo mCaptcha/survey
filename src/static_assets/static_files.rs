@@ -119,7 +119,7 @@ mod tests {
     async fn static_assets_work() {
         let app = get_app!().await;
 
-        for file in [assets::LOGO.path].iter() {
+        for file in [assets::LOGO.path, &*crate::JS].iter() {
             let resp = test::call_service(
                 &app,
                 test::TestRequest::get().uri(file).to_request(),
