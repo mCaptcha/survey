@@ -54,6 +54,7 @@ log = "0.4"
 lazy_static = "1.4"
 
 url = "2.2"
+urlencoding = "2.1.0"
 
 rand = "0.8"
 uuid = { version="0.8.2", features = ["v4"]}

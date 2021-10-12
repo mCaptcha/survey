@@ -51,7 +51,7 @@ pub mod runners {
         let mut uuid;
         let now = OffsetDateTime::now_utc();
 
-        payload.difficulties.sort();
+        payload.difficulties.sort_unstable();
 
         loop {
             uuid = get_uuid();
@@ -121,10 +121,44 @@ async fn add(
 
 #[cfg(test)]
 mod tests {
-    use crate::api::v1::bench::{Bench, Submission};
+    use crate::api::v1::bench::Submission;
     use crate::data::Data;
+    use crate::middleware::auth::GetLoginRoute;
     use crate::tests::*;
     use crate::*;
+
+    use actix_web::{http::header, test};
+
+    #[actix_rt::test]
+    async fn test_bench_register_works() {
+        let data = Data::new().await;
+        let app = get_app!(data).await;
+        let signin_resp = test::call_service(
+            &app,
+            test::TestRequest::get()
+                .uri(V1_API_ROUTES.benches.register)
+                .to_request(),
+        )
+        .await;
+
+        assert_eq!(signin_resp.status(), StatusCode::OK);
+
+        let redirect_to = Some("foo");
+
+        let signin_resp = test::call_service(
+            &app,
+            test::TestRequest::get()
+                .uri(&V1_API_ROUTES.benches.get_login_route(redirect_to))
+                .to_request(),
+        )
+        .await;
+        assert_eq!(signin_resp.status(), StatusCode::FOUND);
+        let headers = signin_resp.headers();
+        assert_eq!(
+            headers.get(header::LOCATION).unwrap(),
+            redirect_to.as_ref().unwrap()
+        )
+    }
 
     #[actix_rt::test]
     async fn test_add_campaign() {
@@ -135,29 +169,6 @@ mod tests {
         const DEVICE_USER_PROVIDED: &str = "foo";
         const DEVICE_SOFTWARE_RECOGNISED: &str = "Foobar.v2";
         const THREADS: i32 = 4;
-
-        let benches = vec![
-            Bench {
-                difficulty: 1,
-                duration: 1.00,
-            },
-            Bench {
-                difficulty: 2,
-                duration: 2.00,
-            },
-            Bench {
-                difficulty: 3,
-                duration: 3.00,
-            },
-            Bench {
-                difficulty: 4,
-                duration: 4.00,
-            },
-            Bench {
-                difficulty: 5,
-                duration: 5.00,
-            },
-        ];
 
         {
             let data = Data::new().await;
@@ -181,7 +192,7 @@ mod tests {
             device_user_provided: DEVICE_USER_PROVIDED.into(),
             device_software_recognised: DEVICE_SOFTWARE_RECOGNISED.into(),
             threads: THREADS,
-            benches: benches.clone(),
+            benches: BENCHES.clone(),
         };
 
         let _proof =

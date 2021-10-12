@@ -30,8 +30,8 @@ pub fn services(cfg: &mut ServiceConfig) {
     campaigns::services(cfg);
 }
 
-pub fn get_admin_check_login() -> crate::CheckLogin {
-    crate::CheckLogin::new(crate::V1_API_ROUTES.admin.auth.register)
+pub fn get_admin_check_login() -> crate::CheckLogin<auth::routes::Auth> {
+    crate::CheckLogin::new(crate::V1_API_ROUTES.admin.auth)
 }
 
 pub mod routes {

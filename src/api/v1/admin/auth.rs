@@ -25,10 +25,27 @@ use crate::errors::*;
 use crate::AppData;
 
 pub mod routes {
+    use crate::middleware::auth::GetLoginRoute;
+    use url::Url;
     pub struct Auth {
         pub logout: &'static str,
         pub login: &'static str,
         pub register: &'static str,
+    }
+
+    impl GetLoginRoute for Auth {
+        fn get_login_route(&self, src: Option<&str>) -> String {
+            if let Some(redirect_to) = src {
+                let mut url = Url::parse("http://x/").unwrap();
+                url.set_path(self.login);
+                url.query_pairs_mut()
+                    .append_pair("redirect_to", redirect_to);
+                let path = format!("{}/?{}", url.path(), url.query().unwrap());
+                path
+            } else {
+                self.login.to_string()
+            }
+        }
     }
 
     impl Auth {

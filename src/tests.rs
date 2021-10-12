@@ -20,6 +20,7 @@ use std::sync::Arc;
 use actix_web::cookie::Cookie;
 use actix_web::test;
 use actix_web::{dev::ServiceResponse, error::ResponseError, http::StatusCode};
+use lazy_static::lazy_static;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -28,7 +29,7 @@ use crate::api::v1::admin::{
     auth::runners::{Login, Register},
     campaigns::{AddCapmaign, AddCapmaignResp},
 };
-use crate::api::v1::bench::{BenchConfig, Submission, SubmissionProof};
+use crate::api::v1::bench::{Bench, BenchConfig, Submission, SubmissionProof};
 use crate::data::Data;
 use crate::errors::*;
 use crate::V1_API_ROUTES;
@@ -396,3 +397,28 @@ pub async fn submit_bench(
 //    assert_eq!(get_feedback_resp.status(), StatusCode::OK);
 //    test::read_body_json(get_feedback_resp).await
 //}
+
+lazy_static! {
+    pub static ref BENCHES: Vec<Bench> = vec![
+        Bench {
+            difficulty: 1,
+            duration: 1.00,
+        },
+        Bench {
+            difficulty: 2,
+            duration: 2.00,
+        },
+        Bench {
+            difficulty: 3,
+            duration: 3.00,
+        },
+        Bench {
+            difficulty: 4,
+            duration: 4.00,
+        },
+        Bench {
+            difficulty: 5,
+            duration: 5.00,
+        },
+    ];
+}

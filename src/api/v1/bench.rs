@@ -18,7 +18,7 @@ use std::borrow::Cow;
 use std::str::FromStr;
 
 use actix_identity::Identity;
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{http, web, HttpResponse, Responder};
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
@@ -29,11 +29,33 @@ use crate::errors::*;
 use crate::AppData;
 
 pub mod routes {
+
+    use crate::middleware::auth::GetLoginRoute;
+
     pub struct Benches {
         pub submit: &'static str,
         pub register: &'static str,
         pub fetch: &'static str,
         pub scope: &'static str,
+    }
+
+    impl GetLoginRoute for Benches {
+        fn get_login_route(&self, src: Option<&str>) -> String {
+            if let Some(redirect_to) = src {
+                //                uri::Builder::new().path_and_query(
+                format!(
+                    "{}?redirect_to={}",
+                    self.register,
+                    urlencoding::encode(redirect_to)
+                )
+            //                let mut url: Uri = self.register.parse().unwrap();
+            //                url.qu
+            //                url.query_pairs_mut()
+            //                    .append_pair("redirect_to", redirect_to);
+            } else {
+                self.register.to_string()
+            }
+        }
     }
 
     impl Benches {
@@ -50,10 +72,10 @@ pub mod routes {
             }
         }
         pub fn submit_route(&self, campaign_id: &str) -> String {
-            self.submit.replace("{campaign_id}", &campaign_id)
+            self.submit.replace("{campaign_id}", campaign_id)
         }
         pub fn fetch_routes(&self, campaign_id: &str) -> String {
-            self.fetch.replace("{campaign_id}", &campaign_id)
+            self.fetch.replace("{campaign_id}", campaign_id)
         }
     }
 }
@@ -99,11 +121,27 @@ pub mod runners {
     }
 }
 
+#[derive(Deserialize)]
+pub struct Query {
+    pub redirect_to: Option<String>,
+}
+
 #[my_codegen::get(path = "crate::V1_API_ROUTES.benches.register")]
-async fn register(data: AppData, id: Identity) -> ServiceResult<impl Responder> {
+async fn register(
+    data: AppData,
+    id: Identity,
+    path: web::Query<Query>,
+) -> ServiceResult<HttpResponse> {
     let uuid = runners::register_runner(&data).await?;
     id.remember(uuid.to_string());
-    Ok(HttpResponse::Ok())
+    let path = path.into_inner();
+    if let Some(redirect_to) = path.redirect_to {
+        Ok(HttpResponse::Found()
+            .insert_header((http::header::LOCATION, redirect_to))
+            .finish())
+    } else {
+        Ok(HttpResponse::Ok().into())
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -126,8 +164,8 @@ pub struct SubmissionProof {
     pub proof: String,
 }
 
-fn get_check_login() -> crate::CheckLogin {
-    crate::CheckLogin::new(crate::V1_API_ROUTES.benches.register)
+fn get_check_login() -> crate::CheckLogin<routes::Benches> {
+    crate::CheckLogin::new(crate::V1_API_ROUTES.benches)
 }
 
 #[my_codegen::post(

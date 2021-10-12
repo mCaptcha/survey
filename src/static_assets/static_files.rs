@@ -126,8 +126,8 @@ mod tests {
         for file in [
             assets::LOGO.path,
             assets::HEADSETS.path,
-            &*crate::JS,
-            &*crate::GLUE,
+            *crate::JS,
+            *crate::GLUE,
         ]
         .iter()
         {
