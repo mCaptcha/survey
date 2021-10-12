@@ -9,6 +9,7 @@ module.exports = {
   entry: {
     bundle: './templates/index.ts',
     bench: './templates/bench.ts',
+    glue: './templates/vendor.ts',
   },
   output: {
     filename: '[name].js',

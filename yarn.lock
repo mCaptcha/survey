@@ -3568,6 +3568,11 @@ map-visit@^1.0.0:
 mcaptcha-browser@./vendor/pow/:
   version "0.1.0"
 
+mcaptcha-glue@^0.1.0-alpha-3:
+  version "0.1.0-alpha-3"
+  resolved "https://registry.yarnpkg.com/mcaptcha-glue/-/mcaptcha-glue-0.1.0-alpha-3.tgz#0c1c5cfc6991de6571fb2c0f0950acac289e1141"
+  integrity sha512-C/Nfw4RGsmbozbyvxx/p0C7bUBn+YmP7tTl/8ORNdQiuy2VQUmD874LvbocnmSar8Isk/8rIaCqmVRBlRw/Yaw==
+
 media-typer@0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/media-typer/-/media-typer-0.3.0.tgz#8710d7af0aa626f8fffa1ce00168545263255748"

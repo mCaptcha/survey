@@ -54,6 +54,9 @@ lazy_static! {
     pub static ref JS: &'static str =
         FILES.get("./static/cache/bundle/bundle.js").unwrap();
 
+    pub static ref GLUE: &'static str =
+        FILES.get("./static/cache/bundle/glue.js").unwrap();
+
     /// points to source files matching build commit
     pub static ref SOURCE_FILES_OF_INSTANCE: String = {
         let mut url = SETTINGS.source_code.clone();

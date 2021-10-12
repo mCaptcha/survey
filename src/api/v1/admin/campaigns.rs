@@ -121,9 +121,7 @@ async fn add(
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
-    use crate::api::v1::bench::{Bench, BenchConfig, Submission, SubmissionProof};
+    use crate::api::v1::bench::{Bench, Submission};
     use crate::data::Data;
     use crate::tests::*;
     use crate::*;

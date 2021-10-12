@@ -28,7 +28,7 @@ use crate::api::v1::admin::{
     auth::runners::{Login, Register},
     campaigns::{AddCapmaign, AddCapmaignResp},
 };
-use crate::api::v1::bench::{Bench, BenchConfig, Submission, SubmissionProof};
+use crate::api::v1::bench::{BenchConfig, Submission, SubmissionProof};
 use crate::data::Data;
 use crate::errors::*;
 use crate::V1_API_ROUTES;

@@ -41,12 +41,12 @@ impl Routes {
             panel,
             home,
             errors: Errors::new(),
-            about: "/about",
+            about: "https://mcaptcha.org/about/",
             sitemap: "/sitemap.xml",
-            thanks: "/thanks",
-            donate: "/donate",
-            security: "/security",
-            privacy: "/privacy-policy",
+            thanks: "https://mcaptcha.org/thanks",
+            donate: "https://mcaptcha.org/donate",
+            security: "https://mcaptcha.org/security",
+            privacy: "https://mcaptcha.org/privacy-policy/",
         }
     }
 

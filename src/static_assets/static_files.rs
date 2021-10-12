@@ -43,6 +43,10 @@ pub mod assets {
             path: FILES.get("./static/cache/img/trash.svg").unwrap(),
             name: "Trash logo"
         };
+        pub static ref HEADSETS: Img = Img {
+            path: FILES.get("./static/cache/img/headsets.jpg").unwrap(),
+            name: "Headsets image"
+        };
     }
 }
 
@@ -119,7 +123,14 @@ mod tests {
     async fn static_assets_work() {
         let app = get_app!().await;
 
-        for file in [assets::LOGO.path, &*crate::JS].iter() {
+        for file in [
+            assets::LOGO.path,
+            assets::HEADSETS.path,
+            &*crate::JS,
+            &*crate::GLUE,
+        ]
+        .iter()
+        {
             let resp = test::call_service(
                 &app,
                 test::TestRequest::get().uri(file).to_request(),
