@@ -187,70 +187,70 @@ impl From<MailboxError> for ServiceError {
 #[cfg(not(tarpaulin_include))]
 pub type ServiceResult<V> = std::result::Result<V, ServiceError>;
 
-//#[derive(Debug, Display, PartialEq, Error)]
-//#[cfg(not(tarpaulin_include))]
-//pub enum PageError {
-//    #[display(fmt = "Something weng wrong: Internal server error")]
-//    InternalServerError,
-//
-//    #[display(fmt = "{}", _0)]
-//    ServiceError(ServiceError),
-//}
-//
-//#[cfg(not(tarpaulin_include))]
-//impl From<sqlx::Error> for PageError {
-//    #[cfg(not(tarpaulin_include))]
-//    fn from(_: sqlx::Error) -> Self {
-//        PageError::InternalServerError
-//    }
-//}
-//
-//#[cfg(not(tarpaulin_include))]
-//impl From<ServiceError> for PageError {
-//    #[cfg(not(tarpaulin_include))]
-//    fn from(e: ServiceError) -> Self {
-//        PageError::ServiceError(e)
-//    }
-//}
-//
-//impl ResponseError for PageError {
-//    fn error_response(&self) -> HttpResponse {
-//        use crate::PAGES;
-//        match self.status_code() {
-//            StatusCode::INTERNAL_SERVER_ERROR => HttpResponse::Found()
-//                .append_header((header::LOCATION, PAGES.errors.internal_server_error))
-//                .finish(),
-//            _ => HttpResponse::Found()
-//                .append_header((header::LOCATION, PAGES.errors.unknown_error))
-//                .finish(),
-//        }
-//    }
-//
-//    #[cfg(not(tarpaulin_include))]
-//    fn status_code(&self) -> StatusCode {
-//        match self {
-//            PageError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-//            PageError::ServiceError(e) => e.status_code(),
-//        }
-//    }
-//}
-//
-//#[cfg(not(tarpaulin_include))]
-//pub type PageResult<V> = std::result::Result<V, PageError>;
-//
-//#[cfg(test)]
-//mod tests {
-//    use super::*;
-//    use crate::PAGES;
-//
-//    #[test]
-//    fn error_works() {
-//        let resp: HttpResponse = PageError::InternalServerError.error_response();
-//        assert_eq!(resp.status(), StatusCode::FOUND);
-//        let headers = resp.headers();
-//        assert_eq!(
-//            headers.get(header::LOCATION).unwrap(),
-//            PAGES.errors.internal_server_error
-//        );
-//    }
-//}
+#[derive(Debug, Display, PartialEq, Error)]
+#[cfg(not(tarpaulin_include))]
+pub enum PageError {
+    #[display(fmt = "Something weng wrong: Internal server error")]
+    InternalServerError,
+
+    #[display(fmt = "{}", _0)]
+    ServiceError(ServiceError),
+}
+
+#[cfg(not(tarpaulin_include))]
+impl From<sqlx::Error> for PageError {
+    #[cfg(not(tarpaulin_include))]
+    fn from(_: sqlx::Error) -> Self {
+        PageError::InternalServerError
+    }
+}
+
+#[cfg(not(tarpaulin_include))]
+impl From<ServiceError> for PageError {
+    #[cfg(not(tarpaulin_include))]
+    fn from(e: ServiceError) -> Self {
+        PageError::ServiceError(e)
+    }
+}
+
+impl ResponseError for PageError {
+    fn error_response(&self) -> HttpResponse {
+        use crate::PAGES;
+        match self.status_code() {
+            StatusCode::INTERNAL_SERVER_ERROR => HttpResponse::Found()
+                .append_header((header::LOCATION, PAGES.errors.internal_server_error))
+                .finish(),
+            _ => HttpResponse::Found()
+                .append_header((header::LOCATION, PAGES.errors.unknown_error))
+                .finish(),
+        }
+    }
+
+    #[cfg(not(tarpaulin_include))]
+    fn status_code(&self) -> StatusCode {
+        match self {
+            PageError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            PageError::ServiceError(e) => e.status_code(),
+        }
+    }
+}
+
+#[cfg(not(tarpaulin_include))]
+pub type PageResult<V> = std::result::Result<V, PageError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::PAGES;
+
+    #[test]
+    fn error_works() {
+        let resp: HttpResponse = PageError::InternalServerError.error_response();
+        assert_eq!(resp.status(), StatusCode::FOUND);
+        let headers = resp.headers();
+        assert_eq!(
+            headers.get(header::LOCATION).unwrap(),
+            PAGES.errors.internal_server_error
+        );
+    }
+}
