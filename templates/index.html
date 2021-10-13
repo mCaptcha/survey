@@ -1,63 +1,88 @@
 <. include!("./components/base/top.html"); .>
-<body class="panel__body">
-  <main class="panel__container">
-    <h1>mCaptcha device benchmark survey</h1>
-    <h2>Why should I participate</h2>
-    <p>
-      <a href="https://mcaptcha.org" target="_blank">mCaptcha</a>
-      is a cutting edge, privacy respecting CAPTCHA system. We use a
-      <a href="https://en.wikipedia.org/wiki/Proof_of_work" target="_blank"
-        >proof of work</a
-      >
-      based mechanism to defend against
-      <a href="https://en.wikipedia.org/wiki/Proof_of_work" target="_blank"
-        >denial-of-service attacks</a
-      >
-      which allows for a non-interactive CAPTCHA experience. We require
-      performance metrics measured on a wide range of devices to fine-tune the
-      system for optimal user experience, see for yourself!
-    </p>
-    <div style="width: 304px; height: 78px">
-      <iframe
-        title="mCaptcha"
-        src="https://demo.mcaptcha.org/widget/?sitekey=6o3p1Fx94hJRFm8g8IHBB7sv8D0em20k"
-        role="presentation"
-        name="mcaptcha-widget__iframe"
-        id="mcaptcha-widget__iframe"
-        scrolling="no"
-        sandbox="allow-same-origin allow-scripts"
-        width="304"
-        height="78"
-        data-mcaptcha_host="https://demo.mcaptcha.org"
-        frameborder="0"
-      ></iframe>
-    </div>
+<body class="survey__body">
+  <main class="survey__container">
+    <h1>mCaptcha benchmark survey</h1>
+    <section>
+      <h2>Why should I participate</h2>
+      <p>
+        <a href="https://mcaptcha.org" target="_blank">mCaptcha</a>
+        is a cutting edge, privacy respecting CAPTCHA system. We use a
+        <a href="https://en.wikipedia.org/wiki/Proof_of_work" target="_blank"
+          >proof of work</a
+        >
+        based mechanism to defend against
+        <a href="https://en.wikipedia.org/wiki/Proof_of_work" target="_blank"
+          >denial-of-service attacks</a
+        >
+        which allows for a non-interactive CAPTCHA experience. We require
+        performance metrics measured on a wide range of devices to fine-tune the
+        system for optimal user experience, see for yourself!
+      </p>
+      <div class="survey__captcha-widget" style="width: 304px; height: 78px">
+        <iframe
+          title="mCaptcha"
+          src="https://demo.mcaptcha.org/widget/?sitekey=6o3p1Fx94hJRFm8g8IHBB7sv8D0em20k"
+          role="presentation"
+          name="mcaptcha-widget__iframe"
+          id="mcaptcha-widget__iframe"
+          scrolling="no"
+          sandbox="allow-same-origin allow-scripts"
+          width="304"
+          height="78"
+          data-mcaptcha_host="https://demo.mcaptcha.org"
+          frameborder="0"
+        ></iframe>
+      </div>
+    </section>
+    <section>
+      <h2>What do I get?</h2>
+      <div class="survey__prize-section">
+        <p>
+          We are conducting a lucky draw. Two lucky participants, selected at
+          random, will win a pair of JBL headsets worth over ₹2,500! Also, you
+          will be helping us make the internet healthier :)
+        </p>
+        <a
+          target="_blank"
+          class="prize__preview"
+          href="https://www.amazon.in/JBL-Detachable-Directional-Headphones-Conference/dp/B0948TG7H8"
+        >
+          <img
+            src="<.= crate::assets::HEADSETS.path .>"
+            alt="<.= crate::assets::HEADSETS.name .>"
+            class="survey__prize"
+          />
+          <p>
+            Product details
+            <img
+              src="<.= crate::assets::EXTERNAL_LINK.path .>"
+              alt="<.= crate::assets::EXTERNAL_LINK.name .>"
+            />
+          </p>
+        </a>
+      </div>
+    </section>
 
-    <h2>What do I get?</h2>
-    <p>
-      We are conducting a lucky draw. Two lucky participants, selected at
-      random, will win a pair of
-      <a
-        target="_blank"
-        href="https://www.amazon.in/JBL-Detachable-Directional-Headphones-Conference/dp/B0948TG7H8"
-        >JBL headsets worth over ₹2,500</a
-      >! Also, you will be helping us make the internet healthier :)
-    </p>
+    <section>
+      <h2>Privacy policy</h2>
+      <p>This survey collects the following information:</p>
+      <ul>
+        <li>Device name</li>
+        <li>Operating system</li>
+        <li>Processor information</li>
+        <li>Benchmark results</li>
+      </ul>
+      <b>No Personally identifying information is collected</b>
+    </section>
 
-    <h2>Privacy policy</h2>
-    <p>This survey collects the following information:</p>
-    <ul>
-      <li>Device name</li>
-      <li>Operating system</li>
-      <li>Processor information</li>
-      <li>Benchmark results</li>
-    </ul>
-    <b>No Personally identifying information is collected</b>
+    <a
+      class="link__btn"
+      href="<.= crate::V1_API_ROUTES.benches.register .>"
+      target="_blank"
+      >Get started</a
+    >
   </main>
-  <. include!("../components/footer/index.html"); .>
-  <a href="<.= crate::V1_API_ROUTES.benches.register .>" target="_blank"
-    >Get started</a
-  >
+  <. include!("./components/footer/index.html"); .>
 </body>
-<script src="./dist/bundle.js"></script>
+<script src="<.= &*crate::GLUE .>./dist/bundle.js"></script>
 <. include!("./components/base/bottom.html"); .>

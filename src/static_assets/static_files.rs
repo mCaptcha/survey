@@ -47,6 +47,10 @@ pub mod assets {
             path: FILES.get("./static/cache/img/headsets.jpg").unwrap(),
             name: "Headsets image"
         };
+        pub static ref EXTERNAL_LINK: Img = Img {
+            path: FILES.get("./static/cache/img/external-link.svg").unwrap(),
+            name: "External Link"
+        };
     }
 }
 
