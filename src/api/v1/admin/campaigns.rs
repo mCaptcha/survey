@@ -36,10 +36,10 @@ pub mod routes {
 
     impl Campaign {
         pub const fn new() -> Campaign {
-            let add = "/api/v1/admin/campaign/add";
-            let delete = "/api/v1/admin/campaign/{uuid}/delete";
+            let add = "/admin/api/v1/campaign/add";
+            let delete = "/admin/api/v1/campaign/{uuid}/delete";
             //            let get_feedback = "/api/v1/campaign/{uuid}/feedback";
-            let list = "/api/v1/admin/campaign/list";
+            let list = "/admin/api/v1/campaign/list";
 
             Campaign { add, delete, list }
         }

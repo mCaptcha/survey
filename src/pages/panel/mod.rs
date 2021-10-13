@@ -29,9 +29,10 @@ pub mod routes {
     }
     impl Panel {
         pub const fn new() -> Panel {
+            let campaigns = Campaigns::new();
             Panel {
-                home: "/api/v1/admin/home/",
-                campaigns: Campaigns::new(),
+                home: "/admin/home",
+                campaigns,
             }
         }
 

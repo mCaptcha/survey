@@ -149,16 +149,16 @@ pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
     let cookie_secret = &SETTINGS.server.cookie_secret;
     IdentityService::new(
         CookieIdentityPolicy::new(cookie_secret.as_bytes())
-            .path("/api/v1/admin")
-            .name("survey-auth")
-            .max_age_secs(60 * 24)
+            .path("/admin/")
+            .name("survey-admin-auth")
+            .max_age_secs(60 * 60 * 24 * 365)
             .domain(&SETTINGS.server.domain)
             .secure(false),
     )
 }
 
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
-    pages::services(cfg);
     api::v1::services(cfg);
+    pages::services(cfg);
     static_assets::services(cfg);
 }

@@ -52,8 +52,8 @@ pub mod routes {
     impl Auth {
         pub const fn new() -> Auth {
             Auth {
-                login: "/api/v1/admin/page/login",
-                join: "/api/v1/admin/page/join",
+                login: "/admin/login",
+                join: "/admin/join",
             }
         }
 

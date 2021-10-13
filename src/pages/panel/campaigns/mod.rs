@@ -38,10 +38,10 @@ pub mod routes {
     impl Campaigns {
         pub const fn new() -> Campaigns {
             Campaigns {
-                home: "/api/v1/admin/page/campaigns",
-                new: "/api/v1/admin/page/campaigns/new",
-                get_feedback: "/api/v1/admin/page/campaigns/{uuid}/feedback",
-                delete: "/api/v1/admin/page/campaigns/{uuid}/delete",
+                home: "/admin/campaigns",
+                new: "/admin/campaigns/new",
+                get_feedback: "/admin/campaigns/{uuid}/feedback",
+                delete: "/admin/campaigns/{uuid}/delete",
             }
         }
 

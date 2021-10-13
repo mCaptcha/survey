@@ -1,5 +1,5 @@
 default: frontend ## Debug build
-	cargo build
+	cargo run
 
 clean: ## Clean all build artifacts and dependencies
 	@cargo clean
