@@ -24,8 +24,6 @@ use crate::api::v1::admin::campaigns::{
 use crate::AppData;
 use crate::PAGES;
 
-use super::get_admin_check_login;
-
 pub mod delete;
 pub mod get;
 pub mod new;
@@ -85,7 +83,10 @@ impl HomePage {
 
 const PAGE: &str = "Campaigns";
 
-#[get(path = "PAGES.panel.campaigns.home", wrap = "get_admin_check_login()")]
+#[get(
+    path = "PAGES.panel.campaigns.home",
+    wrap = "crate::pages::get_page_check_login()"
+)]
 pub async fn home(data: AppData, id: Identity) -> impl Responder {
     let username = id.identity().unwrap();
     let campaigns = list_campaign_runner(&username, &data).await.unwrap();

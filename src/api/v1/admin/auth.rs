@@ -17,10 +17,10 @@
 
 use actix_identity::Identity;
 use actix_web::http::header;
-use actix_web::{web, HttpResponse,  Responder};
+use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 
-use super::{RedirectQuery, get_random};
+use super::{get_random, RedirectQuery};
 use crate::errors::*;
 use crate::AppData;
 

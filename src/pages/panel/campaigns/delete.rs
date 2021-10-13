@@ -25,7 +25,6 @@ use my_codegen::{get, post};
 use sailfish::TemplateOnce;
 use uuid::Uuid;
 
-use super::get_admin_check_login;
 use crate::api::v1::admin::auth::runners::{login_runner, Login, Password};
 use crate::api::v1::admin::campaigns::runners;
 use crate::errors::*;
@@ -60,7 +59,7 @@ async fn get_title(
 
 #[get(
     path = "PAGES.panel.campaigns.delete",
-    wrap = "get_admin_check_login()"
+    wrap = "crate::pages::get_page_check_login()"
 )]
 pub async fn delete_campaign(
     id: Identity,
@@ -86,7 +85,7 @@ pub async fn delete_campaign(
 
 #[post(
     path = "PAGES.panel.campaigns.delete",
-    wrap = "get_admin_check_login()"
+    wrap = "crate::pages::get_page_check_login()"
 )]
 pub async fn delete_campaign_submit(
     id: Identity,

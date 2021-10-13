@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::{RedirectQuery, get_uuid};
+use super::{get_uuid, RedirectQuery};
 use crate::errors::*;
 use crate::AppData;
 
@@ -120,8 +120,6 @@ pub mod runners {
         Ok(uuid)
     }
 }
-
-
 
 #[my_codegen::get(path = "crate::V1_API_ROUTES.benches.register")]
 async fn register(

@@ -30,6 +30,10 @@ pub fn services(cfg: &mut ServiceConfig) {
     errors::services(cfg);
 }
 
+pub fn get_page_check_login() -> crate::CheckLogin<auth::routes::Auth> {
+    crate::CheckLogin::new(crate::PAGES.auth)
+}
+
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod tests {

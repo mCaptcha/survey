@@ -51,6 +51,7 @@ lazy_static! {
 
     pub static ref CSS: &'static str =
         FILES.get("./static/cache/bundle/css/main.css").unwrap();
+
     pub static ref JS: &'static str =
         FILES.get("./static/cache/bundle/bundle.js").unwrap();
 

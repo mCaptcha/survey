@@ -18,8 +18,6 @@ pub mod join;
 pub mod login;
 pub mod sudo;
 
-pub use crate::api::v1::admin::get_admin_check_login;
-
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(login::login);
     cfg.service(login::login_submit);
@@ -28,10 +26,29 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
 }
 
 pub mod routes {
+    use crate::middleware::auth::GetLoginRoute;
+    use url::Url;
+
     pub struct Auth {
         pub login: &'static str,
         pub join: &'static str,
     }
+
+    impl GetLoginRoute for Auth {
+        fn get_login_route(&self, src: Option<&str>) -> String {
+            if let Some(redirect_to) = src {
+                let mut url = Url::parse("http://x/").unwrap();
+                url.set_path(self.login);
+                url.query_pairs_mut()
+                    .append_pair("redirect_to", redirect_to);
+                let path = format!("{}/?{}", url.path(), url.query().unwrap());
+                path
+            } else {
+                self.login.to_string()
+            }
+        }
+    }
+
     impl Auth {
         pub const fn new() -> Auth {
             Auth {

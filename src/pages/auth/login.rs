@@ -22,6 +22,7 @@ use my_codegen::{get, post};
 use sailfish::TemplateOnce;
 
 use crate::api::v1::admin::auth::runners;
+use crate::api::v1::RedirectQuery;
 use crate::errors::*;
 use crate::pages::errors::ErrorPage;
 use crate::AppData;
@@ -65,14 +66,22 @@ pub async fn login_submit(
     id: Identity,
     payload: web::Form<runners::Login>,
     data: AppData,
+    path: web::Path<RedirectQuery>,
 ) -> PageResult<impl Responder> {
     let payload = payload.into_inner();
     match runners::login_runner(&payload, &data).await {
         Ok(username) => {
             id.remember(username);
-            Ok(HttpResponse::Found()
-                .insert_header((header::LOCATION, PAGES.home))
-                .finish())
+            let path = path.into_inner();
+            if let Some(redirect_to) = path.redirect_to {
+                Ok(HttpResponse::Found()
+                    .insert_header((header::LOCATION, redirect_to))
+                    .finish())
+            } else {
+                Ok(HttpResponse::Found()
+                    .insert_header((header::LOCATION, PAGES.home))
+                    .finish())
+            }
         }
         Err(e) => {
             let status = e.status_code();

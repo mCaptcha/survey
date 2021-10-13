@@ -16,8 +16,6 @@
 use actix_web::{http, HttpResponse, Responder};
 use my_codegen::get;
 
-pub use crate::api::v1::admin::get_admin_check_login;
-
 use crate::PAGES;
 
 mod campaigns;
@@ -49,7 +47,10 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     campaigns::services(cfg);
 }
 
-#[get(path = "PAGES.panel.home", wrap = "get_admin_check_login()")]
+#[get(
+    path = "PAGES.panel.home",
+    wrap = "crate::pages::get_page_check_login()"
+)]
 pub async fn home() -> impl Responder {
     HttpResponse::Found()
         .insert_header((http::header::LOCATION, PAGES.panel.campaigns.home))

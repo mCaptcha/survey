@@ -27,8 +27,6 @@ use crate::pages::errors::ErrorPage;
 use crate::AppData;
 use crate::PAGES;
 
-use super::get_admin_check_login;
-
 #[derive(Clone, TemplateOnce)]
 #[template(path = "panel/campaigns/new/index.html")]
 struct NewCampaign<'a> {
@@ -55,14 +53,20 @@ lazy_static! {
     static ref INDEX: String = NewCampaign::default().render_once().unwrap();
 }
 
-#[get(path = "PAGES.panel.campaigns.new", wrap = "get_admin_check_login()")]
+#[get(
+    path = "PAGES.panel.campaigns.new",
+    wrap = "crate::pages::get_page_check_login()"
+)]
 pub async fn new_campaign() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(&*INDEX)
 }
 
-#[post(path = "PAGES.panel.campaigns.new", wrap = "get_admin_check_login()")]
+#[post(
+    path = "PAGES.panel.campaigns.new",
+    wrap = "crate::pages::get_page_check_login()"
+)]
 pub async fn new_campaign_submit(
     id: Identity,
     payload: web::Json<AddCapmaign>,

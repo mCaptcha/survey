@@ -22,7 +22,6 @@
 //use crate::api::v1::admin::campaigns::{runners, GetFeedbackResp};
 //use crate::AppData;
 //use crate::PAGES;
-//use super::get_admin_check_login;
 //
 //#[derive(TemplateOnce)]
 //#[template(path = "panel/campaigns/get/index.html")]
@@ -41,7 +40,7 @@
 //
 //#[get(
 //    path = "PAGES.panel.campaigns.get_feedback",
-//    wrap = "get_admin_check_login()"
+//    wrap = "crate::pages::get_page_check_login()"
 //)]
 //pub async fn get_feedback(
 //    id: Identity,
