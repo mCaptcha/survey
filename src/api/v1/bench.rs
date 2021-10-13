@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
 use uuid::Uuid;
 
-use super::get_uuid;
+use super::{RedirectQuery, get_uuid};
 use crate::errors::*;
 use crate::AppData;
 
@@ -121,16 +121,13 @@ pub mod runners {
     }
 }
 
-#[derive(Deserialize)]
-pub struct Query {
-    pub redirect_to: Option<String>,
-}
+
 
 #[my_codegen::get(path = "crate::V1_API_ROUTES.benches.register")]
 async fn register(
     data: AppData,
     id: Identity,
-    path: web::Query<Query>,
+    path: web::Query<RedirectQuery>,
 ) -> ServiceResult<HttpResponse> {
     let uuid = runners::register_runner(&data).await?;
     id.remember(uuid.to_string());

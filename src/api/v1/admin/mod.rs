@@ -22,7 +22,7 @@ pub mod campaigns;
 #[cfg(test)]
 mod tests;
 
-pub use super::{get_random, get_uuid};
+pub use super::{get_random, get_uuid, RedirectQuery};
 
 pub fn services(cfg: &mut ServiceConfig) {
     auth::services(cfg);

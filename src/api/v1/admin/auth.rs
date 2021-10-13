@@ -17,10 +17,10 @@
 
 use actix_identity::Identity;
 use actix_web::http::header;
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web, HttpResponse,  Responder};
 use serde::{Deserialize, Serialize};
 
-use super::get_random;
+use super::{RedirectQuery, get_random};
 use crate::errors::*;
 use crate::AppData;
 
@@ -231,12 +231,20 @@ async fn register(
 async fn login(
     id: Identity,
     payload: web::Json<runners::Login>,
+    path: web::Query<RedirectQuery>,
     data: AppData,
 ) -> ServiceResult<impl Responder> {
     let payload = payload.into_inner();
     let username = runners::login_runner(&payload, &data).await?;
+    let path = path.into_inner();
     id.remember(username);
-    Ok(HttpResponse::Ok())
+    if let Some(redirect_to) = path.redirect_to {
+        Ok(HttpResponse::Found()
+            .insert_header((header::LOCATION, redirect_to))
+            .finish())
+    } else {
+        Ok(HttpResponse::Ok().into())
+    }
 }
 #[my_codegen::get(
     path = "crate::V1_API_ROUTES.admin.auth.logout",
