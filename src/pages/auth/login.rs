@@ -21,7 +21,7 @@ use lazy_static::lazy_static;
 use my_codegen::{get, post};
 use sailfish::TemplateOnce;
 
-use crate::api::v1::auth::runners;
+use crate::api::v1::admin::auth::runners;
 use crate::errors::*;
 use crate::pages::errors::ErrorPage;
 use crate::AppData;
@@ -95,7 +95,7 @@ mod tests {
 
     use super::*;
 
-    use crate::api::v1::auth::runners::{Login, Register};
+    use crate::api::v1::admin::auth::runners::{Login, Register};
     use crate::data::Data;
     use crate::tests::*;
     use crate::*;
@@ -120,7 +120,7 @@ mod tests {
         };
         let resp = test::call_service(
             &app,
-            post_request!(&msg, V1_API_ROUTES.auth.register).to_request(),
+            post_request!(&msg, V1_API_ROUTES.admin.auth.register).to_request(),
         )
         .await;
         assert_eq!(resp.status(), StatusCode::OK);

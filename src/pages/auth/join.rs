@@ -19,7 +19,7 @@ use actix_web::{error::ResponseError, http::header, web, HttpResponse, Responder
 use lazy_static::lazy_static;
 use sailfish::TemplateOnce;
 
-use crate::api::v1::auth::runners;
+use crate::api::v1::admin::auth::runners;
 use crate::errors::*;
 use crate::pages::errors::ErrorPage;
 use crate::AppData;
@@ -92,10 +92,10 @@ mod tests {
 
     use super::*;
 
-    use crate::api::v1::account::{
+    use crate::api::v1::admin::account::{
         username::runners::username_exists, AccountCheckPayload,
     };
-    use crate::api::v1::auth::runners::Register;
+    use crate::api::v1::admin::auth::runners::Register;
     use crate::data::Data;
     use crate::tests::*;
     use crate::*;

@@ -14,35 +14,38 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-pub mod join;
-pub mod login;
-pub mod sudo;
+@import "./components/footer/main";
+@import "./components/form/main";
+@import "./components/error/main";
 
-pub use crate::api::v1::admin::get_admin_check_login;
+@import "./auth/main";
+@import "./panel/main";
+@import "./panel/campaigns/new/main";
+@import "./panel/campaigns/get/main";
+@import "./errors/main";
 
-pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
-    cfg.service(login::login);
-    cfg.service(login::login_submit);
-    cfg.service(join::join);
-    cfg.service(join::join_submit);
+* {
+	margin: 0;
+	padding: 0;
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+
+	font-family: "Inter UI", -apple-system, BlinkMacSystemFont, "Roboto",
+		"Segoe UI", Helvetica, Arial, sans-serif;
 }
 
-pub mod routes {
-    pub struct Auth {
-        pub login: &'static str,
-        pub join: &'static str,
-    }
-    impl Auth {
-        pub const fn new() -> Auth {
-            Auth {
-                login: "/api/v1/admin/page/login",
-                join: "/api/v1/admin/page/join",
-            }
-        }
+a {
+	text-decoration: none;
+	color: rgb(0, 86, 179);
+}
 
-        pub const fn get_sitemap() -> [&'static str; 2] {
-            const AUTH: Auth = Auth::new();
-            [AUTH.login, AUTH.join]
-        }
-    }
+a:hover {
+	text-decoration: underline;
+}
+
+body {
+	max-width: 100vw;
+	overflow-x: hidden;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
 }

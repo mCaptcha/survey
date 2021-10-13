@@ -21,11 +21,13 @@ use lazy_static::lazy_static;
 use my_codegen::{get, post};
 use sailfish::TemplateOnce;
 
-use crate::api::v1::campaign::{runners, CreateReq};
+use crate::api::v1::admin::campaigns::{runners, AddCapmaign};
 use crate::errors::*;
 use crate::pages::errors::ErrorPage;
 use crate::AppData;
 use crate::PAGES;
+
+use super::get_admin_check_login;
 
 #[derive(Clone, TemplateOnce)]
 #[template(path = "panel/campaigns/new/index.html")]
@@ -53,20 +55,23 @@ lazy_static! {
     static ref INDEX: String = NewCampaign::default().render_once().unwrap();
 }
 
-#[get(path = "PAGES.panel.campaigns.new", wrap = "crate::CheckLogin")]
+#[get(path = "PAGES.panel.campaigns.new", wrap = "get_admin_check_login()")]
 pub async fn new_campaign() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(&*INDEX)
 }
 
-#[post(path = "PAGES.panel.campaigns.new", wrap = "crate::CheckLogin")]
+#[post(path = "PAGES.panel.campaigns.new", wrap = "get_admin_check_login()")]
 pub async fn new_campaign_submit(
     id: Identity,
-    payload: web::Form<CreateReq>,
+    payload: web::Json<AddCapmaign>,
     data: AppData,
 ) -> PageResult<impl Responder> {
-    match runners::new(&payload.into_inner(), &data, &id).await {
+    let username = id.identity().unwrap();
+    let mut payload = payload.into_inner();
+
+    match runners::add_runner(&username, &mut payload, &data).await {
         Ok(_) => {
             Ok(HttpResponse::Found()
                 //TODO show stats of new campaign
@@ -113,17 +118,19 @@ mod tests {
         let (_, _, signin_resp) = register_and_signin(NAME, EMAIL, PASSWORD).await;
         let cookies = get_cookie!(signin_resp);
 
-        let new = CreateReq {
+        let new = AddCapmaign {
             name: CAMPAIGN_NAME.into(),
+            difficulties: DIFFICULTIES.into(),
         };
 
         let new_resp = test::call_service(
             &app,
-            post_request!(&new, PAGES.panel.campaigns.new, FORM)
-                .cookie(cookies.clone())
+            post_request!(&new, crate::PAGES.panel.campaigns.new)
+                .cookie(cookies)
                 .to_request(),
         )
         .await;
+
         assert_eq!(new_resp.status(), StatusCode::FOUND);
         let headers = new_resp.headers();
         assert_eq!(

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "build": "webpack --mode production",
-    "sass": "yarn run dart-sass",
+    "sass": "dart-sass -s compressed templates/main.scss  ./static/cache/bundle/css/main.css",
     "start": "webpack-dev-server --mode development --progress --color",
     "test": "jest"
   },

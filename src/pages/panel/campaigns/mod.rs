@@ -18,9 +18,13 @@ use actix_web::{HttpResponse, Responder};
 use my_codegen::get;
 use sailfish::TemplateOnce;
 
-use crate::api::v1::campaign::{runners::list_campaign_runner, ListCampaignResp};
+use crate::api::v1::admin::campaigns::{
+    runners::list_campaign_runner, ListCampaignResp,
+};
 use crate::AppData;
 use crate::PAGES;
+
+use super::get_admin_check_login;
 
 pub mod delete;
 pub mod get;
@@ -36,10 +40,10 @@ pub mod routes {
     impl Campaigns {
         pub const fn new() -> Campaigns {
             Campaigns {
-                home: "/campaigns",
-                new: "/campaigns/new",
-                get_feedback: "/campaigns/{uuid}/feedback",
-                delete: "/campaigns/{uuid}/delete",
+                home: "/api/v1/admin/page/campaigns",
+                new: "/api/v1/admin/page/campaigns/new",
+                get_feedback: "/api/v1/admin/page/campaigns/{uuid}/feedback",
+                delete: "/api/v1/admin/page/campaigns/{uuid}/delete",
             }
         }
 
@@ -62,7 +66,7 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(home);
     cfg.service(new::new_campaign);
     cfg.service(new::new_campaign_submit);
-    cfg.service(get::get_feedback);
+    //    cfg.service(get::get_feedback);
     cfg.service(delete::delete_campaign);
     cfg.service(delete::delete_campaign_submit);
 }
@@ -81,7 +85,7 @@ impl HomePage {
 
 const PAGE: &str = "Campaigns";
 
-#[get(path = "PAGES.panel.campaigns.home", wrap = "crate::CheckLogin")]
+#[get(path = "PAGES.panel.campaigns.home", wrap = "get_admin_check_login()")]
 pub async fn home(data: AppData, id: Identity) -> impl Responder {
     let username = id.identity().unwrap();
     let campaigns = list_campaign_runner(&username, &data).await.unwrap();

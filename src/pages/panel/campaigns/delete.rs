@@ -25,8 +25,9 @@ use my_codegen::{get, post};
 use sailfish::TemplateOnce;
 use uuid::Uuid;
 
-use crate::api::v1::auth::runners::{login_runner, Login, Password};
-use crate::api::v1::campaign::runners;
+use super::get_admin_check_login;
+use crate::api::v1::admin::auth::runners::{login_runner, Login, Password};
+use crate::api::v1::admin::campaigns::runners;
 use crate::errors::*;
 use crate::pages::auth::sudo::SudoPage;
 use crate::AppData;
@@ -43,11 +44,11 @@ async fn get_title(
     let campaign = sqlx::query_as!(
         Name,
         "SELECT name 
-     FROM kaizen_campaign
+     FROM survey_campaigns
      WHERE 
-         uuid = $1
+         id = $1
      AND
-        user_id = (SELECT ID from kaizen_users WHERE name = $2)",
+        user_id = (SELECT ID from survey_admins WHERE name = $2)",
         &uuid,
         &username
     )
@@ -57,7 +58,10 @@ async fn get_title(
     Ok(format!("Delete camapign \"{}\"?", campaign.name))
 }
 
-#[get(path = "PAGES.panel.campaigns.delete", wrap = "crate::CheckLogin")]
+#[get(
+    path = "PAGES.panel.campaigns.delete",
+    wrap = "get_admin_check_login()"
+)]
 pub async fn delete_campaign(
     id: Identity,
     path: web::Path<String>,
@@ -80,7 +84,10 @@ pub async fn delete_campaign(
         .body(page))
 }
 
-#[post(path = "PAGES.panel.campaigns.delete", wrap = "crate::CheckLogin")]
+#[post(
+    path = "PAGES.panel.campaigns.delete",
+    wrap = "get_admin_check_login()"
+)]
 pub async fn delete_campaign_submit(
     id: Identity,
     path: web::Path<String>,
@@ -102,7 +109,7 @@ pub async fn delete_campaign_submit(
         let status = e.status_code();
         let heading = status.canonical_reason().unwrap_or("Error");
 
-        let form_route = crate::V1_API_ROUTES.campaign.get_delete_route(&path);
+        let form_route = crate::V1_API_ROUTES.admin.campaign.get_delete_route(&path);
         let title = get_title(&username, &uuid, &data).await?;
         let mut ctx = SudoPage::new(&form_route, &title);
         let err = format!("{}", e);
@@ -179,7 +186,7 @@ mod tests {
             &app,
             post_request!(
                 &creds,
-                &PAGES.panel.campaigns.get_delete_route(&uuid.uuid),
+                &PAGES.panel.campaigns.get_delete_route(&uuid.campaign_id),
                 FORM
             )
             .cookie(cookies.clone())

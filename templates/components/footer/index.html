@@ -1,0 +1,24 @@
+<footer class="footer">
+  <. use crate::PAGES; .>
+  <ul class="footer__section">
+    <li class="footer__item">
+      <a class="footer__link" href="<.= PAGES.about .>">About</a>
+    </li>
+    <li class="footer__item">
+      <a class="footer__link" href="<.= PAGES.donate .>">Donate</a>
+    </li>
+    <li class="footer__item">
+      <a class="footer__link" href="<.= PAGES.privacy .>">Privacy</a>
+    </li>
+    <li class="footer__item">
+      <a class="footer__link" href="<.= PAGES.security .>">Security</a>
+    </li>
+    <li class="footer__item">
+      <a class="footer__link" href="<.= PAGES.thanks .>">Thanks</a>
+    </li>
+    <li class="footer__item">
+      <a class="footer__link" href="<.= &*crate::SOURCE_FILES_OF_INSTANCE .>">
+        v<.= crate::VERSION .>-<.= crate::GIT_COMMIT_HASH[0..8] .>
+    </li>
+  </ul>
+</footer>
