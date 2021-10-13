@@ -93,7 +93,7 @@ impl Settings {
             .expect("Couldn't get the number of CPUs");
 
         const CURRENT_DIR: &str = "./config/default.toml";
-        const ETC: &str = "/etc/athena/config.toml";
+        const ETC: &str = "/etc/mcaptcha-survey/config.toml";
 
         if let Ok(path) = env::var("ATHENA_CONFIG") {
             s.merge(File::with_name(&path))?;
