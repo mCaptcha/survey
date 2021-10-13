@@ -1,5 +1,18 @@
 {
   "db": "PostgreSQL",
+  "03c9789e83a398bed96354924a0e63ccaa97bec667fda1b8277bb9afda9a6fcd": {
+    "query": "DELETE \n            FROM survey_campaigns \n         WHERE \n             user_id = (\n                 SELECT \n                         ID \n                 FROM \n                         survey_admins \n                 WHERE \n                         name = $1\n             )\n         AND\n            id = ($2)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "0d22134cc5076304b7895827f006ee8269cc500f400114a7472b83f0f1c568b5": {
     "query": "INSERT INTO survey_admins \n        (name , password,  secret) VALUES ($1, $2, $3)",
     "describe": {
@@ -133,6 +146,27 @@
       "nullable": []
     }
   },
+  "58ec3b8f98c27e13ec2732f8ee23f6eb9845ac5d9fd97b1e5c9f2eed4b1f5693": {
+    "query": "SELECT name \n     FROM survey_campaigns\n     WHERE \n         id = $1\n     AND\n        user_id = (SELECT ID from survey_admins WHERE name = $2)",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
   "683707dbc847b37c58c29aaad0d1a978c9fe0657da13af99796e4461134b5a43": {
     "query": "UPDATE survey_admins set email = $1\n        WHERE name = $2",
     "describe": {
@@ -163,6 +197,32 @@
       },
       "nullable": [
         null
+      ]
+    }
+  },
+  "70cc7bfc9b6ff5b68db70c069c0947d51bfc4a53cedc020016ee25ff98586c93": {
+    "query": "SELECT \n            name, id\n        FROM \n            survey_campaigns \n            WHERE\n                user_id = (\n                    SELECT \n                        ID\n                    FROM \n                        survey_admins\n                    WHERE\n                        name = $1\n                )",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false
       ]
     }
   },

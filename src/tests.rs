@@ -27,7 +27,7 @@ use uuid::Uuid;
 use super::*;
 use crate::api::v1::admin::{
     auth::runners::{Login, Register},
-    campaigns::{AddCapmaign, AddCapmaignResp},
+    campaigns::{AddCapmaign, AddCapmaignResp, ListCampaignResp},
 };
 use crate::api::v1::bench::{Bench, BenchConfig, Submission, SubmissionProof};
 use crate::data::Data;
@@ -177,28 +177,28 @@ pub async fn bad_post_req_test<T: Serialize>(
     //println!("{}", txt.error);
     assert_eq!(resp_err.error, format!("{}", err));
 }
-//
-///// bad post req test without payload
-//pub async fn bad_post_req_test_witout_payload(
-//    name: &str,
-//    password: &str,
-//    url: &str,
-//    err: ServiceError,
-//) {
-//    let (data, _, signin_resp) = signin(name, password).await;
-//    let cookies = get_cookie!(signin_resp);
-//    let app = get_app!(data).await;
-//
-//    let resp = test::call_service(
-//        &app,
-//        post_request!(url).cookie(cookies.clone()).to_request(),
-//    )
-//    .await;
-//    assert_eq!(resp.status(), err.status_code());
-//    let resp_err: ErrorToResponse = test::read_body_json(resp).await;
-//    //println!("{}", txt.error);
-//    assert_eq!(resp_err.error, format!("{}", err));
-//}
+
+/// bad post req test without payload
+pub async fn bad_post_req_test_witout_payload(
+    name: &str,
+    password: &str,
+    url: &str,
+    err: ServiceError,
+) {
+    let (data, _, signin_resp) = signin(name, password).await;
+    let cookies = get_cookie!(signin_resp);
+    let app = get_app!(data).await;
+
+    let resp = test::call_service(
+        &app,
+        post_request!(url).cookie(cookies.clone()).to_request(),
+    )
+    .await;
+    assert_eq!(resp.status(), err.status_code());
+    let resp_err: ErrorToResponse = test::read_body_json(resp).await;
+    //println!("{}", txt.error);
+    assert_eq!(resp_err.error, format!("{}", err));
+}
 
 pub const DIFFICULTIES: [i32; 5] = [1, 2, 3, 4, 5];
 
@@ -255,35 +255,38 @@ pub async fn get_campaign_config(
     test::read_body_json(new_resp).await
 }
 
-//pub async fn delete_campaign(
-//    camapign: &CreateResp,
-//    data: Arc<Data>,
-//    cookies: Cookie<'_>,
-//) {
-//    let del_route = V1_API_ROUTES.campaign.get_delete_route(&camapign.uuid);
-//    let app = get_app!(data).await;
-//    let del_resp =
-//        test::call_service(&app, post_request!(&del_route).cookie(cookies).to_request())
-//            .await;
-//    assert_eq!(del_resp.status(), StatusCode::OK);
-//}
-//
-//pub async fn list_campaings(
-//    data: Arc<Data>,
-//    cookies: Cookie<'_>,
-//) -> Vec<ListCampaignResp> {
-//    let app = get_app!(data).await;
-//    let list_resp = test::call_service(
-//        &app,
-//        post_request!(crate::V1_API_ROUTES.campaign.list)
-//            .cookie(cookies)
-//            .to_request(),
-//    )
-//    .await;
-//    assert_eq!(list_resp.status(), StatusCode::OK);
-//    test::read_body_json(list_resp).await
-//}
-//
+pub async fn delete_campaign(
+    camapign: &AddCapmaignResp,
+    data: Arc<Data>,
+    cookies: Cookie<'_>,
+) {
+    let del_route = V1_API_ROUTES
+        .admin
+        .campaign
+        .get_delete_route(&camapign.campaign_id);
+    let app = get_app!(data).await;
+    let del_resp =
+        test::call_service(&app, post_request!(&del_route).cookie(cookies).to_request())
+            .await;
+    assert_eq!(del_resp.status(), StatusCode::OK);
+}
+
+pub async fn list_campaings(
+    data: Arc<Data>,
+    cookies: Cookie<'_>,
+) -> Vec<ListCampaignResp> {
+    let app = get_app!(data).await;
+    let list_resp = test::call_service(
+        &app,
+        post_request!(crate::V1_API_ROUTES.admin.campaign.list)
+            .cookie(cookies)
+            .to_request(),
+    )
+    .await;
+    assert_eq!(list_resp.status(), StatusCode::OK);
+    test::read_body_json(list_resp).await
+}
+
 pub async fn submit_bench(
     payload: &Submission,
     campaign: &AddCapmaignResp,

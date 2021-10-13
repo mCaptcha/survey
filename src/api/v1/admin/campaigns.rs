@@ -20,27 +20,40 @@ use actix_identity::Identity;
 use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
+use uuid::Uuid;
 
-use super::get_uuid;
+use super::{get_admin_check_login, get_uuid};
 use crate::errors::*;
 use crate::AppData;
 
 pub mod routes {
     pub struct Campaign {
         pub add: &'static str,
+        pub delete: &'static str,
+        //    pub get_feedback: &'static str,
+        pub list: &'static str,
     }
 
     impl Campaign {
         pub const fn new() -> Campaign {
             let add = "/api/v1/admin/campaign/add";
-            Campaign { add }
+            let delete = "/api/v1/admin/campaign/{uuid}/delete";
+            //            let get_feedback = "/api/v1/campaign/{uuid}/feedback";
+            let list = "/api/v1/admin/campaign/list";
+
+            Campaign { add, delete, list }
+        }
+        //        pub fn get_benches_route(&self, campaign_id: &str) -> String {
+        //            self.get_feedback.replace("{uuid}", &campaign_id)
+        //        }
+
+        pub fn get_delete_route(&self, campaign_id: &str) -> String {
+            self.delete.replace("{uuid}", &campaign_id)
         }
     }
 }
 
 pub mod runners {
-    //    use std::borrow::Cow;
-
     use super::*;
 
     pub async fn add_runner(
@@ -87,6 +100,218 @@ pub mod runners {
         }
         Ok(uuid)
     }
+
+    pub async fn list_campaign_runner(
+        username: &str,
+        data: &AppData,
+    ) -> ServiceResult<Vec<ListCampaignResp>> {
+        struct ListCampaign {
+            name: String,
+            id: Uuid,
+        }
+
+        let mut campaigns = sqlx::query_as!(
+            ListCampaign,
+            "SELECT 
+            name, id
+        FROM 
+            survey_campaigns 
+            WHERE
+                user_id = (
+                    SELECT 
+                        ID
+                    FROM 
+                        survey_admins
+                    WHERE
+                        name = $1
+                )",
+            username
+        )
+        .fetch_all(&data.db)
+        .await?;
+
+        let mut list_resp = Vec::with_capacity(campaigns.len());
+        campaigns.drain(0..).for_each(|c| {
+            list_resp.push(ListCampaignResp {
+                name: c.name,
+                uuid: c.id.to_string(),
+            });
+        });
+
+        Ok(list_resp)
+    }
+
+    //    pub async fn get_benches(
+    //        username: &str,
+    //        uuid: &str,
+    //        data: &AppData,
+    //    ) -> ServiceResult<GetFeedbackResp> {
+    //        let uuid = Uuid::parse_str(uuid).map_err(|_| ServiceError::NotAnId)?;
+    //
+    //        struct FeedbackInternal {
+    //            time: OffsetDateTime,
+    //            description: String,
+    //            helpful: bool,
+    //        }
+    //
+    //        struct Name {
+    //            name: String,
+    //        }
+    //
+    //        let name_fut = sqlx::query_as!(
+    //            Name,
+    //            "SELECT name
+    //            FROM survey_campaigns
+    //            WHERE uuid = $1
+    //            AND
+    //                user_id = (
+    //                    SELECT
+    //                        ID
+    //                   FROM
+    //                        kaizen_users
+    //                    WHERE
+    //                        name = $2
+    //                )
+    //           ",
+    //            uuid,
+    //            username
+    //        )
+    //        .fetch_one(&data.db); //.await?;
+    //
+    //        let feedback_fut = sqlx::query_as!(
+    //            FeedbackInternal,
+    //            "SELECT
+    //            time, description, helpful
+    //        FROM
+    //            kaizen_feedbacks
+    //        WHERE campaign_id = (
+    //            SELECT uuid
+    //            FROM
+    //                survey_campaigns
+    //            WHERE
+    //                uuid = $1
+    //            AND
+    //                user_id = (
+    //                    SELECT
+    //                        ID
+    //                    FROM
+    //                        kaizen_users
+    //                    WHERE
+    //                        name = $2
+    //                )
+    //           )",
+    //            uuid,
+    //            username
+    //        )
+    //        .fetch_all(&data.db);
+    //        let (name, mut feedbacks) = try_join!(name_fut, feedback_fut)?;
+    //        //.await?;
+    //
+    //        let mut feedback_resp = Vec::with_capacity(feedbacks.len());
+    //        feedbacks.drain(0..).for_each(|f| {
+    //            feedback_resp.push(Feedback {
+    //                time: f.time.unix_timestamp() as u64,
+    //                description: f.description,
+    //                helpful: f.helpful,
+    //            });
+    //        });
+    //
+    //        Ok(GetFeedbackResp {
+    //            feedbacks: feedback_resp,
+    //            name: name.name,
+    //        })
+    //    }
+
+    pub async fn delete(
+        uuid: &Uuid,
+        username: &str,
+        data: &AppData,
+    ) -> ServiceResult<()> {
+        sqlx::query!(
+            "DELETE 
+            FROM survey_campaigns 
+         WHERE 
+             user_id = (
+                 SELECT 
+                         ID 
+                 FROM 
+                         survey_admins 
+                 WHERE 
+                         name = $1
+             )
+         AND
+            id = ($2)",
+            username,
+            uuid
+        )
+        .execute(&data.db)
+        .await?;
+        Ok(())
+    }
+}
+
+#[my_codegen::post(
+    path = "crate::V1_API_ROUTES.admin.campaign.delete",
+    wrap = "get_admin_check_login()"
+)]
+pub async fn delete(
+    id: Identity,
+    data: AppData,
+    path: web::Path<String>,
+) -> ServiceResult<impl Responder> {
+    let username = id.identity().unwrap();
+    let path = path.into_inner();
+    let uuid = Uuid::parse_str(&path).map_err(|_| ServiceError::NotAnId)?;
+    runners::delete(&uuid, &username, &data).await?;
+    Ok(HttpResponse::Ok())
+}
+
+//#[derive(Serialize, Deserialize)]
+//pub struct Feedback {
+//    pub time: u64,
+//    pub description: String,
+//    pub helpful: bool,
+//}
+//
+//#[derive(Serialize, Deserialize)]
+//pub struct GetFeedbackResp {
+//    pub name: String,
+//    pub feedbacks: Vec<Feedback>,
+//}
+//
+//#[my_codegen::post(
+//    path = "crate::V1_API_ROUTES.campaign.get_feedback",
+//    wrap = "crate::CheckLogin"
+//)]
+//pub async fn get_feedback(
+//    id: Identity,
+//    data: AppData,
+//    path: web::Path<String>,
+//) -> ServiceResult<impl Responder> {
+//    let username = id.identity().unwrap();
+//    let path = path.into_inner();
+//    let feedback_resp = runners::get_feedback(&username, &path, &data).await?;
+//    Ok(HttpResponse::Ok().json(feedback_resp))
+//}
+
+#[derive(Serialize, Deserialize)]
+pub struct ListCampaignResp {
+    pub name: String,
+    pub uuid: String,
+}
+
+#[my_codegen::post(
+    path = "crate::V1_API_ROUTES.admin.campaign.list",
+    wrap = "get_admin_check_login()"
+)]
+pub async fn list_campaign(
+    id: Identity,
+    data: AppData,
+) -> ServiceResult<impl Responder> {
+    let username = id.identity().unwrap();
+    let list_resp = runners::list_campaign_runner(&username, &data).await?;
+
+    Ok(HttpResponse::Ok().json(list_resp))
 }
 
 #[derive(Serialize, Deserialize)]
@@ -102,6 +327,9 @@ pub struct AddCapmaignResp {
 
 pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(add);
+    cfg.service(delete);
+    cfg.service(list_campaign);
+    //cfg.service(get_feedback);
 }
 
 #[my_codegen::post(path = "crate::V1_API_ROUTES.admin.campaign.add")]
@@ -123,6 +351,7 @@ async fn add(
 mod tests {
     use crate::api::v1::bench::Submission;
     use crate::data::Data;
+    use crate::errors::*;
     use crate::middleware::auth::GetLoginRoute;
     use crate::tests::*;
     use crate::*;
@@ -197,5 +426,21 @@ mod tests {
 
         let _proof =
             submit_bench(&submit_payload, &campaign, survey_cookie, data.clone()).await;
+
+        let list = list_campaings(data.clone(), cookies.clone()).await;
+        assert!(list.iter().any(|c| c.name == NAME));
+
+        bad_post_req_test_witout_payload(
+            NAME,
+            PASSWORD,
+            &V1_API_ROUTES.admin.campaign.delete.replace("{uuid}", NAME),
+            ServiceError::NotAnId,
+        )
+        .await;
+
+        delete_campaign(&campaign, data.clone(), cookies.clone()).await;
+
+        let list = list_campaings(data.clone(), cookies.clone()).await;
+        assert!(!list.iter().any(|c| c.name == NAME));
     }
 }
