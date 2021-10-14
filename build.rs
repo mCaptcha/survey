@@ -24,16 +24,9 @@ fn main() {
     let output = Command::new("git")
         .args(&["rev-parse", "HEAD"])
         .output()
-        .unwrap();
+        .expect("error in git command, is git installed?");
     let git_hash = String::from_utf8(output.stdout).unwrap();
     println!("cargo:rustc-env=GIT_HASH={}", git_hash);
-
-    //    let yml = include_str!("./openapi.yaml");
-    //    let api_json: serde_json::Value = serde_yaml::from_str(yml).unwrap();
-    //    println!(
-    //        "cargo:rustc-env=OPEN_API_DOCS={}",
-    //        serde_json::to_string(&api_json).unwrap()
-    //    );
 
     let now = OffsetDateTime::now_utc().format("%y-%m-%d");
     println!("cargo:rustc-env=COMPILED_DATE={}", &now);
@@ -53,7 +46,7 @@ fn cache_bust() {
     //        mime::TEXT_CSS,
     //    ];
 
-    println!("cargo:rerun-if-changed=static/cache");
+    //println!("cargo:rerun-if-changed=static/cache");
     let no_hash = vec![NoHashCategory::FileExtentions(vec!["wasm"])];
 
     let config = BusterBuilder::default()

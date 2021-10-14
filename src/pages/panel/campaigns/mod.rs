@@ -24,15 +24,17 @@ use crate::api::v1::admin::campaigns::{
 use crate::AppData;
 use crate::PAGES;
 
+pub mod about;
+pub mod bench;
 pub mod delete;
-pub mod get;
 pub mod new;
 
 pub mod routes {
     pub struct Campaigns {
         pub home: &'static str,
         pub new: &'static str,
-        pub get_feedback: &'static str,
+        pub about: &'static str,
+        pub bench: &'static str,
         pub delete: &'static str,
     }
     impl Campaigns {
@@ -40,7 +42,8 @@ pub mod routes {
             Campaigns {
                 home: "/admin/campaigns",
                 new: "/admin/campaigns/new",
-                get_feedback: "/admin/campaigns/{uuid}/feedback",
+                about: "/survey/campaigns/{uuid}/about",
+                bench: "/survey/campaigns/{uuid}/bench",
                 delete: "/admin/campaigns/{uuid}/delete",
             }
         }
@@ -49,8 +52,12 @@ pub mod routes {
             self.delete.replace("{uuid}", campaign_id)
         }
 
-        pub fn get_feedback_route(&self, campaign_id: &str) -> String {
-            self.get_feedback.replace("{uuid}", campaign_id)
+        pub fn get_bench_route(&self, campaign_id: &str) -> String {
+            self.bench.replace("{uuid}", campaign_id)
+        }
+
+        pub fn get_about_route(&self, campaign_id: &str) -> String {
+            self.about.replace("{uuid}", campaign_id)
         }
 
         pub const fn get_sitemap() -> [&'static str; 2] {
@@ -64,7 +71,8 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(home);
     cfg.service(new::new_campaign);
     cfg.service(new::new_campaign_submit);
-    //    cfg.service(get::get_feedback);
+    cfg.service(about::about);
+    cfg.service(bench::bench);
     cfg.service(delete::delete_campaign);
     cfg.service(delete::delete_campaign_submit);
 }
@@ -95,4 +103,71 @@ pub async fn home(data: AppData, id: Identity) -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(&page)
+}
+
+#[cfg(test)]
+mod tests {
+    use actix_web::http::StatusCode;
+    use actix_web::test;
+
+    use crate::tests::*;
+    use crate::*;
+
+    #[actix_rt::test]
+    async fn survey_pages_work() {
+        const NAME: &str = "surveyuserpages";
+        const PASSWORD: &str = "longpassword";
+        const EMAIL: &str = "templateuser@surveyuserpages.com";
+        const CAMPAIGN_NAME: &str = "delcappageusercamaping";
+
+        let data = Data::new().await;
+        {
+            delete_user(NAME, &data).await;
+        }
+
+        let (_, _, signin_resp) = register_and_signin(NAME, EMAIL, PASSWORD).await;
+        let cookies = get_cookie!(signin_resp);
+
+        let campaign =
+            create_new_campaign(CAMPAIGN_NAME, data.clone(), cookies.clone()).await;
+
+        let app = get_app!(data).await;
+
+        let protected_urls =
+            vec![PAGES.panel.campaigns.get_bench_route(&campaign.campaign_id)];
+
+        let public_urls =
+            vec![PAGES.panel.campaigns.get_about_route(&campaign.campaign_id)];
+
+        for url in public_urls.iter() {
+            let resp =
+                test::call_service(&app, test::TestRequest::get().uri(url).to_request())
+                    .await;
+            if resp.status() != StatusCode::OK {
+                println!("Probably error url: {}", url);
+            }
+            assert_eq!(resp.status(), StatusCode::OK);
+        }
+
+        for url in protected_urls.iter() {
+            let resp =
+                test::call_service(&app, test::TestRequest::get().uri(url).to_request())
+                    .await;
+            if resp.status() != StatusCode::FOUND {
+                println!("Probably error url: {}", url);
+            }
+            assert_eq!(resp.status(), StatusCode::FOUND);
+
+            let authenticated_resp = test::call_service(
+                &app,
+                test::TestRequest::get()
+                    .uri(url)
+                    .cookie(cookies.clone())
+                    .to_request(),
+            )
+            .await;
+
+            assert_eq!(authenticated_resp.status(), StatusCode::OK);
+        }
+    }
 }

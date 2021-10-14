@@ -19,7 +19,7 @@
       </thead>
       <tbody class="campaign__body">
         <. for campaign in data.iter() { .>
-          <. let route = crate::PAGES.panel.campaigns.get_feedback_route(&campaign.uuid); .>
+          <. let route = crate::PAGES.panel.campaigns.get_about_route(&campaign.uuid); .>
           <tr class="campaign__item">
             <td>
               <a href="<.= &route .>">

@@ -108,8 +108,8 @@ pub async fn delete_campaign_submit(
         let status = e.status_code();
         let heading = status.canonical_reason().unwrap_or("Error");
 
-        let form_route = crate::V1_API_ROUTES.admin.campaign.get_delete_route(&path);
-        let title = get_title(&username, &uuid, &data).await?;
+        let form_route = crate::V1_API_ROUTES.admin.campaign.get_delete_route(path);
+        let title = get_title(username, uuid, data).await?;
         let mut ctx = SudoPage::new(&form_route, &title);
         let err = format!("{}", e);
         ctx.set_err(heading, &err);

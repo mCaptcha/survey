@@ -22,7 +22,7 @@ mod panel;
 pub mod routes;
 //mod sitemap;
 
-pub const NAME: &str = "mCaptcha";
+pub const NAME: &str = "Kaizen";
 
 pub fn services(cfg: &mut ServiceConfig) {
     auth::services(cfg);
@@ -92,7 +92,7 @@ mod tests {
             )
             .await;
 
-            if url == &PAGES.home {
+            if url == PAGES.home {
                 assert_eq!(authenticated_resp.status(), StatusCode::FOUND);
                 let headers = authenticated_resp.headers();
                 assert_eq!(

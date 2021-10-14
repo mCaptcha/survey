@@ -29,7 +29,7 @@ async fn protected_routes_work() {
     const PASSWORD: &str = "longpassword2";
     const EMAIL: &str = "testuser119@a.com2";
 
-    let get_protected_urls = ["/logout"];
+    let get_protected_urls = [V1_API_ROUTES.admin.auth.logout];
 
     {
         let data = Data::new().await;

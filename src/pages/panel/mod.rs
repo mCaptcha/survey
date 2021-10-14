@@ -13,10 +13,10 @@
  *
  * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-use actix_web::{HttpResponse, Responder};
-use lazy_static::lazy_static;
+use actix_web::{http, HttpResponse, Responder};
 use my_codegen::get;
-use sailfish::TemplateOnce;
+
+use super::get_page_check_login;
 
 use crate::PAGES;
 
@@ -50,19 +50,9 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     campaigns::services(cfg);
 }
 
-#[derive(TemplateOnce, Default)]
-#[template(path = "index.html")]
-struct HomePage;
-
-const PAGE: &str = "Survey";
-
-lazy_static! {
-    static ref INDEX: String = HomePage::default().render_once().unwrap();
-}
-
-#[get(path = "PAGES.panel.home")]
+#[get(path = "PAGES.panel.home", wrap = "get_page_check_login()")]
 pub async fn home() -> impl Responder {
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(&*INDEX)
+    HttpResponse::Found()
+        .insert_header((http::header::LOCATION, PAGES.panel.campaigns.home))
+        .finish()
 }

@@ -50,9 +50,9 @@ pub mod routes {
 
     impl Auth {
         pub const fn new() -> Auth {
-            let login = "/api/v1/admin/signin";
-            let logout = "/logout";
-            let register = "/api/v1/admin/signup";
+            let login = "/admin/api/v1/signin";
+            let logout = "/admin/logout";
+            let register = "/admin/api/v1/signup";
             Auth {
                 logout,
                 login,

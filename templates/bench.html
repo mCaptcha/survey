@@ -1,0 +1,95 @@
+<. include!("./components/base/top.html"); .>
+<body class="survey__body">
+  <main class="survey__container">
+    <div id="pre-bench">
+      <h1>Click to Start Benchmark</h1>
+
+      <button id="start" type="submit">Start</button>
+    </div>
+
+    <noscript>
+      <b>
+        This is a WASM benchmark, please enable JavScript to run it. We don't
+        collect any data and
+        <a href="https://github.com/mCaptcha/benches"
+          >source code is available here</a
+        >
+      </b>
+    </noscript>
+
+    <div id="bench">
+      <h1 id="status" class="name">Running benchmark</h1>
+
+      <div id="device-info"></div>
+
+      <div id="counter"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Difficulty factor</th>
+            <th>Duration(ms)</th>
+          </tr>
+        </thead>
+        <tbody id="stats"></tbody>
+      </table>
+    </div>
+  </main>
+  <. include!("./components/footer/index.html"); .>
+</body>
+<style>
+  body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 0;
+    display: hidden;
+    align-items: center;
+  }
+
+  #start {
+    width: 100px;
+  }
+
+  #pre-bench,
+  #bench {
+    width: 100%;
+    display: flex;
+    margin: 40px auto;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  #bench {
+    display: none;
+  }
+
+  #status {
+    max-width: 80%;
+    margin: auto;
+  }
+
+  table {
+    border-collapse: collapse;
+    margin: 40px auto;
+    width: 40%;
+  }
+
+  td,
+  th {
+    border: 1px solid #999;
+    padding: 0.5rem;
+    text-align: left;
+  }
+
+  th {
+    color: green;
+  }
+
+  #device-info {
+    margin: auto;
+    font-size: 1.3rem;
+  }
+</style>
+<script src="<.= &*crate::GLUE .>"></script>
+<. include!("./components/base/bottom.html"); .>
