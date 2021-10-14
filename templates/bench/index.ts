@@ -15,10 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import { Perf } from "./types";
+import ROUTES from "../api/v1/routes";
 
 export const index = () => {
-  console.log("running bench init");
   const FACTOR = 500000;
+
+  const initSession = async () => {
+    fetch(ROUTES.register);
+  };
+
   const worker = new Worker("/bench.js");
   const res: Array<Perf> = [];
   const stats = document.getElementById("stats");
@@ -71,8 +76,9 @@ export const index = () => {
     s.innerHTML = "Benchmark finished";
   };
 
-  const run = (e: Event) => {
+  const run = async (e: Event) => {
     e.preventDefault();
+    await initSession();
     document.getElementById("pre-bench").style.display = "none";
     document.getElementById("bench").style.display = "flex";
 
@@ -100,5 +106,7 @@ export const index = () => {
     addDeviceInfo();
   };
 
-  document.getElementById("start").addEventListener("click", (e) => run(e));
+  document
+    .getElementById("start")
+    .addEventListener("click", async (e) => await run(e));
 };

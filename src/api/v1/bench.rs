@@ -129,8 +129,20 @@ async fn register(
     session: Session,
     path: web::Query<RedirectQuery>,
 ) -> ServiceResult<HttpResponse> {
-    let uuid = runners::register_runner(&data).await?;
-    session.insert(SURVEY_USER_ID, uuid.to_string()).unwrap();
+    let is_authenticated = || {
+        if let Ok(Some(_)) = session.get::<String>(SURVEY_USER_ID) {
+            log::info!("user already registered");
+            true
+        } else {
+            false
+        }
+    };
+
+    if !is_authenticated() {
+        let uuid = runners::register_runner(&data).await?;
+        session.insert(SURVEY_USER_ID, uuid.to_string()).unwrap();
+        session.get::<String>(SURVEY_USER_ID).unwrap().unwrap();
+    }
     let path = path.into_inner();
     if let Some(redirect_to) = path.redirect_to {
         Ok(HttpResponse::Found()
