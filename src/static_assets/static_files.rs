@@ -36,7 +36,7 @@ pub mod assets {
 
     lazy_static! {
         pub static ref LOGO: Img = Img {
-            path: FILES.get("./static/cache/img/logo.svg").unwrap(),
+            path: FILES.get("./static/cache/img/icon-trans.png").unwrap(),
             name: "mCaptcha logo"
         };
         pub static ref TRASH: Img = Img {
