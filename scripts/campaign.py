@@ -21,7 +21,8 @@ from creds import COOKIE
 
 def add_campaign():
     """Add campaign"""
-    url = "http://localhost:7000/admin/api/v1/campaign/add"
+    #    url = "http://localhost:7000/admin/api/v1/campaign/add"
+    url = "https://survey.mcaptcha.org/admin/api/v1/campaign/add"
     payload = json.dumps(
         {
             "name": "test_1",

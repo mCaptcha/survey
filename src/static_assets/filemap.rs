@@ -39,8 +39,8 @@ mod tests {
     #[test]
     fn filemap_works() {
         let files = super::FileMap::new();
-        let css = files.get("./static/cache/img/logo.svg").unwrap();
-        println!("{}", css);
-        assert!(css.contains("/assets/img/logo"));
+        let logo = files.get("./static/cache/img/icon-trans.png").unwrap();
+        println!("{}", logo);
+        assert!(logo.contains("/assets/img/icon-trans"));
     }
 }
