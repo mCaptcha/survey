@@ -20,11 +20,11 @@ doc: ## Prepare documentation
 	cargo doc --no-deps --workspace --all-features
 
 docker: ## Build docker images
-	docker build -t mcapthca/survey:master -t mcapthca/survey:latest .
+	docker build -t mcaptcha/survey:master -t mcaptcha/survey:latest .
 
 docker-publish: docker ## Build and publish docker images
-	docker push mcapthca/survey:master 
-	docker push mcapthca/survey:latest
+	docker push mcaptcha/survey:master 
+	docker push mcaptcha/survey:latest
 
 frontend: ## Build frontend assets
 	@yarn install
