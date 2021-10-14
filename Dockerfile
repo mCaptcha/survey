@@ -1,4 +1,4 @@
-FROM node:14.16.0 as frontend
+FROM node:16.11-bullseye-slim as frontend
 LABEL org.opencontainers.image.source https://github.com/mCaptcha/survey
 RUN apt-get update && apt-get install -y make
 COPY package.json yarn.lock /src/
