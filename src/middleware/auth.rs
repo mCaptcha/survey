@@ -94,27 +94,19 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let (r, mut pl) = req.into_parts();
         let mut is_authenticated = || match self.session_type {
-            AuthenticatedSession::ActixSession => {
-                if let Ok(Ok(Some(_))) = Session::from_request(&r, &mut pl)
+            AuthenticatedSession::ActixSession => matches!(
+                Session::from_request(&r, &mut pl)
                     .into_inner()
-                    .map(|x| x.get::<String>(SURVEY_USER_ID))
-                {
-                    true
-                } else {
-                    false
-                }
-            }
+                    .map(|x| x.get::<String>(SURVEY_USER_ID)),
+                Ok(Ok(Some(_)))
+            ),
 
-            AuthenticatedSession::ActixIdentity => {
-                if let Ok(Some(_)) = Identity::from_request(&r, &mut pl)
+            AuthenticatedSession::ActixIdentity => matches!(
+                Identity::from_request(&r, &mut pl)
                     .into_inner()
-                    .map(|x| x.identity())
-                {
-                    true
-                } else {
-                    false
-                }
-            }
+                    .map(|x| x.identity()),
+                Ok(Some(_))
+            ),
         };
         if is_authenticated() {
             let req = ServiceRequest::from_parts(r, pl);

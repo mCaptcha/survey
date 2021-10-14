@@ -1,10 +1,26 @@
 <. include!("../components/base/top.html"); .>
 <body class="survey__body">
   <main class="survey__container">
+<. include!("../components/error/index.html"); .>
     <div id="pre-bench">
       <h1>Click to Start Benchmark</h1>
+      <form class="new-campaign__form" accept-charset="utf-8">
+        <label class="form__label" for="name">
+          Device name
+          <input
+            class="form__input"
+            name="name"
+            required
+            id="name"
+            type="text"
+          />
+        </label>
 
-      <button id="start" type="submit">Start</button>
+        <!--        <button id="start" type="submit">Start</button> -->
+        <button id="start" class="form__submit" type="submit">
+          Start
+        </button>
+      </form>
     </div>
 
     <noscript>
@@ -20,6 +36,7 @@
     <div id="bench">
       <h1 id="status" class="name">Running benchmark</h1>
 
+      <div id="submission-proof"></div>
       <div id="device-info"></div>
 
       <div id="counter"></div>
@@ -45,10 +62,6 @@
     padding: 40px 0;
     display: hidden;
     align-items: center;
-  }
-
-  #start {
-    width: 100px;
   }
 
   #pre-bench,

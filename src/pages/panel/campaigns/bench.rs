@@ -23,12 +23,21 @@ use sailfish::TemplateOnce;
 use uuid::Uuid;
 
 use crate::errors::*;
+use crate::pages::errors::ErrorPage;
 use crate::PAGES;
 
-#[derive(TemplateOnce, Default)]
+#[derive(TemplateOnce)]
 #[template(path = "bench/index.html")]
-struct Bench;
+struct Bench<'a> {
+    error: Option<ErrorPage<'a>>,
+}
 const PAGE: &str = "Survey";
+
+impl<'a> Default for Bench<'a> {
+    fn default() -> Self {
+        Bench { error: None }
+    }
+}
 
 lazy_static! {
     static ref BENCH: String = Bench::default().render_once().unwrap();

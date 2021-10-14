@@ -16,7 +16,7 @@
  */
 
 import { gen_pow } from "mcaptcha-browser";
-import { Perf } from "./types";
+import { Bench } from "./types";
 
 type PoWConfig = {
   string: string;
@@ -43,11 +43,11 @@ onmessage = function (event) {
   const t0 = performance.now();
   gen_pow(config.salt, config.string, config.difficulty_factor);
   const t1 = performance.now();
-  const time = t1 - t0;
+  const duration = t1 - t0;
 
-  const msg: Perf = {
+  const msg: Bench = {
     difficulty: difficulty_factor,
-    time: time,
+    duration,
   };
   postMessage(msg);
 };

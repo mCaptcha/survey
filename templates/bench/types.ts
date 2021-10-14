@@ -15,8 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+export type Bench = {
+  difficulty: number;
+  duration: number;
+};
 
-export type Perf = {
-  difficulty: Number;
-  time: Number;
+export type Submission = {
+  device_user_provided: String;
+  device_software_recognised: String;
+  threads: number;
+  benches: Array<Bench>;
+};
+
+export type SubmissionProof = {
+  token: String;
+  proof: String;
 };

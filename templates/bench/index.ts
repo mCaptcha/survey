@@ -14,8 +14,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { Perf } from "./types";
+import { Bench, Submission, SubmissionProof } from "./types";
 import ROUTES from "../api/v1/routes";
+import genJsonPaylod from "../utils/genJsonPayload";
+import isBlankString from "../utils/isBlankString";
 
 export const index = () => {
   const FACTOR = 500000;
@@ -25,16 +27,18 @@ export const index = () => {
   };
 
   const worker = new Worker("/bench.js");
-  const res: Array<Perf> = [];
+  const res: Array<Bench> = [];
   const stats = document.getElementById("stats");
+  const CAMPAIGN_ID = window.location.pathname.split("/")[3];
+  let deviceName = "";
 
-  const addResult = (perf: Perf) => {
+  const addResult = (perf: Bench) => {
     const row = document.createElement("tr");
     row.className = "data";
     const diff = document.createElement("td");
     diff.innerHTML = perf.difficulty.toString();
     const duration = document.createElement("td");
-    duration.innerHTML = perf.time.toString();
+    duration.innerHTML = perf.duration.toString();
 
     row.appendChild(diff);
     row.appendChild(duration);
@@ -42,6 +46,39 @@ export const index = () => {
     stats.appendChild(row);
 
     res.push(perf);
+  };
+
+  const submitBench = async () => {
+    const payload: Submission = {
+      device_user_provided: deviceName,
+      threads: window.navigator.hardwareConcurrency,
+      device_software_recognised: window.navigator.userAgent,
+
+      benches: res,
+    };
+
+    const resp = await fetch(
+      ROUTES.submitBench(CAMPAIGN_ID),
+      genJsonPaylod(payload)
+    );
+    if (resp.status == 200) {
+      const data: SubmissionProof = await resp.json();
+      const element = document.createElement("div");
+      const token = document.createElement("b");
+      token.innerText = "User Agent: ";
+      const tokenText = document.createTextNode(`${data.token}`);
+
+      const proof = document.createElement("b");
+      proof.innerText = "Proof: ";
+      const proofText = document.createTextNode(`${data.proof}`);
+
+      element.appendChild(token);
+      element.appendChild(tokenText);
+      element.appendChild(document.createElement("br"));
+      element.appendChild(proof);
+      element.appendChild(proofText);
+      document.getElementById("submission-proof").appendChild(element);
+    }
   };
 
   const addDeviceInfo = () => {
@@ -71,14 +108,23 @@ export const index = () => {
     document.getElementById("device-info").appendChild(element);
   };
 
-  const finished = () => {
+  const finished = async () => {
+    await submitBench();
     const s = document.getElementById("status");
     s.innerHTML = "Benchmark finished";
   };
 
   const run = async (e: Event) => {
     e.preventDefault();
+    const deveceNameElement = <HTMLInputElement>document.getElementById("name");
+    if (isBlankString(deveceNameElement.value, "Device Name", e)) {
+      return;
+    }
+
+    deviceName = deveceNameElement.value;
+
     await initSession();
+
     document.getElementById("pre-bench").style.display = "none";
     document.getElementById("bench").style.display = "flex";
 
@@ -87,11 +133,11 @@ export const index = () => {
     const counterElement = document.getElementById("counter");
     counterElement.innerText = `${iterations} more to go`;
 
-    worker.onmessage = (event: MessageEvent) => {
-      const data: Perf = event.data;
+    worker.onmessage = async (event: MessageEvent) => {
+      const data: Bench = event.data;
       addResult(data);
       if (res.length == iterations) {
-        finished();
+        await finished();
         counterElement.innerText = "All Done!";
       } else {
         counterElement.innerText = `${iterations - res.length} more to go`;

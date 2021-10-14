@@ -14,37 +14,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-$message-bg: #d63f3f;
-$light-text: rgba(255, 255, 255, 0.87);
 
-#err__container {
-	display: felx;
-	position: fixed;
-	top: 0;
-	right: 0;
-	width: 350px;
-}
+const genJsonPayload = (payload: object): object => {
+  const value = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  };
+  return value;
+};
 
-.err__msg-container {
-	display: flex;
-	width: 100%;
-	color: $light-text;
-	background-color: $message-bg;
-	padding: 20px;
-	border-radius: 5px;
-	opacity: 0.9;
-}
-
-.err__close {
-	min-width: 10px;
-	min-height: 10px;
-	background-color: $message-bg;
-	margin-left: 20px;
-	border: none;
-}
-
-.err__close:hover {
-	cursor: pointer;
-	width: 20px;
-	height: 20px;
-}
+export default genJsonPayload;
