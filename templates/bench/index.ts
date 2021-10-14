@@ -14,14 +14,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { Bench, Submission, SubmissionProof } from "./types";
+import { Bench, BenchConfig, Submission, SubmissionProof } from "./types";
 import ROUTES from "../api/v1/routes";
 import genJsonPaylod from "../utils/genJsonPayload";
 import isBlankString from "../utils/isBlankString";
+import createError from "../components/error/";
 
 export const index = () => {
-  const FACTOR = 500000;
-
   const initSession = async () => {
     fetch(ROUTES.register);
   };
@@ -114,6 +113,18 @@ export const index = () => {
     s.innerHTML = "Benchmark finished";
   };
 
+  const getConfig = async (): Promise<BenchConfig> => {
+    const resp = await fetch(ROUTES.fetchConfig(CAMPAIGN_ID));
+    if (resp.status != 200) {
+      const msg = "Something went wrong while fetching survey";
+      createError(msg);
+      throw new Error(msg);
+    }
+
+    const config: BenchConfig = await resp.json();
+    return config;
+  };
+
   const run = async (e: Event) => {
     e.preventDefault();
     const deveceNameElement = <HTMLInputElement>document.getElementById("name");
@@ -128,7 +139,9 @@ export const index = () => {
     document.getElementById("pre-bench").style.display = "none";
     document.getElementById("bench").style.display = "flex";
 
-    const iterations = 9;
+    const config = await getConfig();
+
+    const iterations = config.difficulties.length;
 
     const counterElement = document.getElementById("counter");
     counterElement.innerText = `${iterations} more to go`;
@@ -144,10 +157,9 @@ export const index = () => {
       }
     };
 
-    for (let i = 1; i <= iterations; i++) {
-      const difficulty_factor = i * FACTOR;
-      worker.postMessage(difficulty_factor);
-    }
+    config.difficulties.forEach((difficulty_factor) =>
+      worker.postMessage(difficulty_factor)
+    );
 
     addDeviceInfo();
   };

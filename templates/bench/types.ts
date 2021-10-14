@@ -31,3 +31,7 @@ export type SubmissionProof = {
   token: String;
   proof: String;
 };
+
+export type BenchConfig = {
+  difficulties: Array<number>;
+};

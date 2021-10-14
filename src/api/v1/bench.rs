@@ -292,7 +292,7 @@ pub struct BenchConfig {
     pub difficulties: Vec<i32>,
 }
 
-#[my_codegen::post(
+#[my_codegen::get(
     path = "crate::V1_API_ROUTES.benches.fetch",
     wrap = "get_check_login()"
 )]

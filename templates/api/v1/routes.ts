@@ -18,6 +18,7 @@
 const ROUTES = {
   register: "/survey/api/v1/benches/register",
   submitBench: (key: string): string => `/survey/api/v1/benches/${key}/submit`,
+  fetchConfig: (key: string): string => `/survey/api/v1/benches/${key}/fetch`,
 };
 
 export default ROUTES;

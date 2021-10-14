@@ -249,9 +249,14 @@ pub async fn get_campaign_config(
     let route = V1_API_ROUTES
         .benches
         .fetch_routes(&campaign.campaign_id.to_string());
-    let new_resp =
-        test::call_service(&app, post_request!(&route).cookie(cookies).to_request())
-            .await;
+    let new_resp = test::call_service(
+        &app,
+        test::TestRequest::get()
+            .uri(&route)
+            .cookie(cookies)
+            .to_request(),
+    )
+    .await;
     assert_eq!(new_resp.status(), StatusCode::OK);
     test::read_body_json(new_resp).await
 }

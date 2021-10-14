@@ -16,13 +16,13 @@
 import requests
 import json
 
-from creds import COOKIE
+from creds import COOKIE, URL
 
 
 def add_campaign():
     """Add campaign"""
-    #    url = "http://localhost:7000/admin/api/v1/campaign/add"
-    url = "https://survey.mcaptcha.org/admin/api/v1/campaign/add"
+
+    url = URL
     payload = json.dumps(
         {
             "name": "test_1",
