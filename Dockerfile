@@ -8,12 +8,11 @@ RUN yarn install
 COPY . .
 RUN make frontend
 
-FROM rust:1.51.0-slim-buster as rust
+FROM rust:1-slim-bullseye as rust
 WORKDIR /src
 RUN apt-get update && apt-get install -y git
 COPY . /src
 COPY --from=frontend /src/static/cache/bundle /src/static/cache/bundle
-ENV RUST_BACKTRACE=1
 RUN cargo build --release
 
 FROM debian:bullseye-slim
