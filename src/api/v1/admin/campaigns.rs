@@ -48,7 +48,7 @@ pub mod routes {
         //        }
 
         pub fn get_delete_route(&self, campaign_id: &str) -> String {
-            self.delete.replace("{uuid}", &campaign_id)
+            self.delete.replace("{uuid}", campaign_id)
         }
     }
 }

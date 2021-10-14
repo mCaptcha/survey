@@ -137,7 +137,7 @@ pub fn get_survey_identity_service() -> IdentityService<CookieIdentityPolicy> {
     IdentityService::new(
         CookieIdentityPolicy::new(cookie_secret.as_bytes())
             .name("survey-id")
-            .path(V1_API_ROUTES.benches.scope)
+            .path("/survey")
             .max_age_secs(30 * 60)
             .domain(&SETTINGS.server.domain)
             .secure(false),

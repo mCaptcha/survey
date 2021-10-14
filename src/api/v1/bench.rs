@@ -60,10 +60,10 @@ pub mod routes {
 
     impl Benches {
         pub const fn new() -> Benches {
-            let submit = "/api/v1/benches/{campaign_id}/submit";
-            let fetch = "/api/v1/benches/{campaign_id}/fetch";
-            let register = "/api/v1/benches/register";
-            let scope = "/api/v1/benches/";
+            let submit = "/survey/api/v1/benches/{campaign_id}/submit";
+            let fetch = "/survey/api/v1/benches/{campaign_id}/fetch";
+            let register = "/survey/api/v1/benches/register";
+            let scope = "/survey/api/v1/benches/";
             Benches {
                 submit,
                 register,

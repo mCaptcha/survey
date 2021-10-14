@@ -1,5 +1,5 @@
 default: frontend ## Debug build
-	cargo run
+	cargo build
 
 clean: ## Clean all build artifacts and dependencies
 	@cargo clean
@@ -29,7 +29,7 @@ docker-publish: docker ## Build and publish docker images
 frontend: ## Build frontend assets
 	@yarn install
 	@-rm -rf ./static/cache/bundle/
-	@-mkdir ./static/cache/bundle/css/
+	@-mkdir -p ./static/cache/bundle/css/
 	@yarn sass
 	@yarn build
 	@./scripts/bundle.sh
