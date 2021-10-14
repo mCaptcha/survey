@@ -31,7 +31,11 @@ pub fn services(cfg: &mut ServiceConfig) {
 }
 
 pub fn get_admin_check_login() -> crate::CheckLogin<auth::routes::Auth> {
-    crate::CheckLogin::new(crate::V1_API_ROUTES.admin.auth)
+    use crate::middleware::auth::*;
+    CheckLogin::new(
+        crate::V1_API_ROUTES.admin.auth,
+        AuthenticatedSession::ActixIdentity,
+    )
 }
 
 pub mod routes {

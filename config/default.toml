@@ -2,11 +2,13 @@ debug = true
 allow_registration = true
 source_code = "https://github.com/mcaptcha/survey"
 password = "password"
+default_campaign = "b6b261fa-3ef9-4d7f-8852-339b8f81bb01"
 
 [server]
 # Please set a unique value, your kaizen instance's security depends on this being 
 # unique
 cookie_secret = "8ce364dab188452ffa76c3e1869be5d40dcb9db4826b7b78a3e6ce1a8ca19d32"
+cookie_secret2 = "408f276a8dec44992b14bdf1be9289a2c67547807e16c5ebcf5e904fcc916208"
 # The port at which you want authentication to listen to
 # takes a number, choose from 1000-10000 if you dont know what you are doing
 port = 7000

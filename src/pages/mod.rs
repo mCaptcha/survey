@@ -31,7 +31,8 @@ pub fn services(cfg: &mut ServiceConfig) {
 }
 
 pub fn get_page_check_login() -> crate::CheckLogin<auth::routes::Auth> {
-    crate::CheckLogin::new(crate::PAGES.auth)
+    use crate::middleware::auth::*;
+    CheckLogin::new(crate::PAGES.auth, AuthenticatedSession::ActixIdentity)
 }
 
 #[cfg(not(tarpaulin_include))]
@@ -97,7 +98,7 @@ mod tests {
                 let headers = authenticated_resp.headers();
                 assert_eq!(
                     headers.get(header::LOCATION).unwrap(),
-                    PAGES.panel.campaigns.home
+                    &*super::panel::DEFAULT_CAMPAIGN_ABOUT
                 );
             } else {
                 assert_eq!(authenticated_resp.status(), StatusCode::OK);

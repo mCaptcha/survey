@@ -154,6 +154,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-session"
+version = "0.5.0-beta.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b853e383318e1074c1dc988871c33cd186b89bfadfd543758b2f7ffebb88f47"
+dependencies = [
+ "actix-service",
+ "actix-web",
+ "derive_more",
+ "futures-util",
+ "log",
+ "serde 1.0.130",
+ "serde_json",
+ "time 0.2.27",
+]
+
+[[package]]
 name = "actix-tls"
 version = "3.0.0-beta.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2415,6 +2431,7 @@ dependencies = [
  "actix-identity",
  "actix-rt",
  "actix-service",
+ "actix-session",
  "actix-web",
  "actix-web-codegen 0.5.0-beta.4 (git+https://github.com/realaravinth/actix-web)",
  "argon2-creds",

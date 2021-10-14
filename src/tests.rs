@@ -88,7 +88,7 @@ macro_rules! get_app {
         actix_web::App::new()
             .app_data(crate::get_json_err())
             .wrap(crate::get_identity_service())
-            .wrap(get_survey_identity_service())
+            .wrap(crate::get_survey_session())
             .wrap(actix_web::middleware::NormalizePath::new(
                 actix_web::middleware::TrailingSlash::Trim,
             ))

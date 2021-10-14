@@ -13,3 +13,6 @@ coverage
 dist
 assets
 scripts/creds.py
+__pycache__/
+*.py[cod]
+*$py.class

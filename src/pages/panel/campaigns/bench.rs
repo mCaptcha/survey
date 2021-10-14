@@ -36,7 +36,7 @@ lazy_static! {
 
 #[get(
     path = "PAGES.panel.campaigns.bench",
-    wrap = "crate::pages::get_page_check_login()"
+    wrap = "crate::api::v1::bench::get_check_login()"
 )]
 pub async fn bench(path: web::Path<String>) -> PageResult<impl Responder> {
     let path = path.into_inner();

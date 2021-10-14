@@ -110,7 +110,7 @@ async fn main() -> std::io::Result<()> {
                     .header("Permissions-Policy", "interest-cohort=()"),
             )
             .wrap(get_identity_service())
-            .wrap(get_survey_identity_service())
+            .wrap(get_survey_session())
             .wrap(actix_middleware::NormalizePath::new(
                 actix_middleware::TrailingSlash::Trim,
             ))
@@ -132,16 +132,15 @@ pub fn get_json_err() -> JsonConfig {
 }
 
 #[cfg(not(tarpaulin_include))]
-pub fn get_survey_identity_service() -> IdentityService<CookieIdentityPolicy> {
-    let cookie_secret = &SETTINGS.server.cookie_secret;
-    IdentityService::new(
-        CookieIdentityPolicy::new(cookie_secret.as_bytes())
-            .name("survey-id")
-            .path("/survey")
-            .max_age_secs(30 * 60)
-            .domain(&SETTINGS.server.domain)
-            .secure(false),
-    )
+pub fn get_survey_session() -> actix_session::CookieSession {
+    let cookie_secret = &SETTINGS.server.cookie_secret2;
+    actix_session::CookieSession::private(cookie_secret.as_bytes())
+        .domain(&SETTINGS.server.domain)
+        .name("survey-id")
+        .path("/survey")
+        .max_age(30 * 60)
+        .domain(&SETTINGS.server.domain)
+        .secure(false)
 }
 
 #[cfg(not(tarpaulin_include))]

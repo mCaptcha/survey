@@ -21,12 +21,14 @@ use config::{Config, ConfigError, Environment, File};
 use log::{debug, warn};
 use serde::Deserialize;
 use url::Url;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Server {
     pub port: u32,
     pub domain: String,
     pub cookie_secret: String,
+    pub cookie_secret2: String,
     pub ip: String,
     pub proxy_has_tls: bool,
 }
@@ -80,6 +82,7 @@ pub struct Settings {
     pub server: Server,
     pub source_code: String,
     pub password: String,
+    pub default_campaign: String,
 }
 
 #[cfg(not(tarpaulin_include))]
@@ -106,9 +109,10 @@ impl Settings {
             log::warn!("configuration file not found");
         }
 
-        s.merge(Environment::with_prefix("MCAPTCHA").separator("_"))?;
+        s.merge(Environment::with_prefix("MCAPTCHA").separator("__"))?;
 
         check_url(&s);
+        check_uuid(&s);
 
         match env::var("PORT") {
             Ok(val) => {
@@ -142,6 +146,17 @@ fn check_url(s: &Config) {
         .expect("Couldn't access source_code");
 
     Url::parse(&url).expect("Please enter a URL for source_code in settings");
+}
+
+#[cfg(not(tarpaulin_include))]
+fn check_uuid(s: &Config) {
+    use std::str::FromStr;
+
+    let id = s
+        .get::<String>("default_campaign")
+        .expect("Couldn't access default_campaign");
+
+    Uuid::from_str(&id).expect("Please enter a UUID for default_campaign in settings");
 }
 
 #[cfg(not(tarpaulin_include))]

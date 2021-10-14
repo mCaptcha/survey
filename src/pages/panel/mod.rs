@@ -14,9 +14,8 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 use actix_web::{http, HttpResponse, Responder};
+use lazy_static::lazy_static;
 use my_codegen::get;
-
-use super::get_page_check_login;
 
 use crate::PAGES;
 
@@ -50,9 +49,18 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     campaigns::services(cfg);
 }
 
-#[get(path = "PAGES.panel.home", wrap = "get_page_check_login()")]
+lazy_static! {
+    pub static ref DEFAULT_CAMPAIGN_ABOUT: String = PAGES
+        .panel
+        .campaigns
+        .get_about_route(&*crate::SETTINGS.default_campaign);
+}
+
+#[get(path = "PAGES.panel.home")]
 pub async fn home() -> impl Responder {
+    let loc: &str = &*DEFAULT_CAMPAIGN_ABOUT;
     HttpResponse::Found()
-        .insert_header((http::header::LOCATION, PAGES.panel.campaigns.home))
+        //.insert_header((http::header::LOCATION, PAGES.panel.campaigns.home))
+        .insert_header((http::header::LOCATION, loc))
         .finish()
 }

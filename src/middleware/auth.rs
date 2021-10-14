@@ -18,11 +18,19 @@
 
 use std::rc::Rc;
 
+use crate::api::v1::bench::SURVEY_USER_ID;
 use actix_http::body::AnyBody;
 use actix_identity::Identity;
 use actix_service::{Service, Transform};
+use actix_session::Session;
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::{http, Error, FromRequest, HttpResponse};
+
+#[derive(Clone)]
+pub enum AuthenticatedSession {
+    ActixIdentity,
+    ActixSession,
+}
 
 use futures::future::{ok, Either, Ready};
 
@@ -32,12 +40,16 @@ pub trait GetLoginRoute {
 
 pub struct CheckLogin<T: GetLoginRoute> {
     login: Rc<T>,
+    session_type: AuthenticatedSession,
 }
 
 impl<T: GetLoginRoute> CheckLogin<T> {
-    pub fn new(login: T) -> Self {
+    pub fn new(login: T, session_type: AuthenticatedSession) -> Self {
         let login = Rc::new(login);
-        Self { login }
+        Self {
+            login,
+            session_type,
+        }
     }
 }
 
@@ -57,12 +69,14 @@ where
         ok(CheckLoginMiddleware {
             service,
             login: self.login.clone(),
+            session_type: self.session_type.clone(),
         })
     }
 }
 pub struct CheckLoginMiddleware<S, GT> {
     service: S,
     login: Rc<GT>,
+    session_type: AuthenticatedSession,
 }
 
 impl<S, GT> Service<ServiceRequest> for CheckLoginMiddleware<S, GT>
@@ -79,13 +93,30 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let (r, mut pl) = req.into_parts();
+        let mut is_authenticated = || match self.session_type {
+            AuthenticatedSession::ActixSession => {
+                if let Ok(Ok(Some(_))) = Session::from_request(&r, &mut pl)
+                    .into_inner()
+                    .map(|x| x.get::<String>(SURVEY_USER_ID))
+                {
+                    true
+                } else {
+                    false
+                }
+            }
 
-        // TODO investigate when the bellow statement will
-        // return error
-        if let Ok(Some(_)) = Identity::from_request(&r, &mut pl)
-            .into_inner()
-            .map(|x| x.identity())
-        {
+            AuthenticatedSession::ActixIdentity => {
+                if let Ok(Some(_)) = Identity::from_request(&r, &mut pl)
+                    .into_inner()
+                    .map(|x| x.identity())
+                {
+                    true
+                } else {
+                    false
+                }
+            }
+        };
+        if is_authenticated() {
             let req = ServiceRequest::from_parts(r, pl);
             Either::Left(self.service.call(req))
         } else {

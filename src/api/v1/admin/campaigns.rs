@@ -409,7 +409,6 @@ mod tests {
         let cookies = get_cookie!(signin_resp);
         let survey = get_survey_user(data.clone()).await;
         let survey_cookie = get_cookie!(survey);
-        //        let app = get_app!(data).await;
 
         let campaign = create_new_campaign(NAME, data.clone(), cookies.clone()).await;
         let campaign_config =

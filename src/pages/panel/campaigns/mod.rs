@@ -107,11 +107,36 @@ pub async fn home(data: AppData, id: Identity) -> impl Responder {
 
 #[cfg(test)]
 mod tests {
+    use actix_web::cookie::Cookie;
     use actix_web::http::StatusCode;
     use actix_web::test;
 
     use crate::tests::*;
     use crate::*;
+
+    async fn protect_urls_test(urls: &[String], data: Arc<Data>, cookie: Cookie<'_>) {
+        let app = get_app!(data).await;
+        for url in urls.iter() {
+            let resp =
+                test::call_service(&app, test::TestRequest::get().uri(url).to_request())
+                    .await;
+            if resp.status() != StatusCode::FOUND {
+                println!("Probably error url: {}", url);
+            }
+            assert_eq!(resp.status(), StatusCode::FOUND);
+
+            let authenticated_resp = test::call_service(
+                &app,
+                test::TestRequest::get()
+                    .uri(url)
+                    .cookie(cookie.clone())
+                    .to_request(),
+            )
+            .await;
+
+            assert_eq!(authenticated_resp.status(), StatusCode::OK);
+        }
+    }
 
     #[actix_rt::test]
     async fn survey_pages_work() {
@@ -127,13 +152,15 @@ mod tests {
 
         let (_, _, signin_resp) = register_and_signin(NAME, EMAIL, PASSWORD).await;
         let cookies = get_cookie!(signin_resp);
+        let survey = get_survey_user(data.clone()).await;
+        let survey_cookie = get_cookie!(survey);
 
         let campaign =
             create_new_campaign(CAMPAIGN_NAME, data.clone(), cookies.clone()).await;
 
         let app = get_app!(data).await;
 
-        let protected_urls =
+        let survey_protected_urls =
             vec![PAGES.panel.campaigns.get_bench_route(&campaign.campaign_id)];
 
         let public_urls =
@@ -149,25 +176,6 @@ mod tests {
             assert_eq!(resp.status(), StatusCode::OK);
         }
 
-        for url in protected_urls.iter() {
-            let resp =
-                test::call_service(&app, test::TestRequest::get().uri(url).to_request())
-                    .await;
-            if resp.status() != StatusCode::FOUND {
-                println!("Probably error url: {}", url);
-            }
-            assert_eq!(resp.status(), StatusCode::FOUND);
-
-            let authenticated_resp = test::call_service(
-                &app,
-                test::TestRequest::get()
-                    .uri(url)
-                    .cookie(cookies.clone())
-                    .to_request(),
-            )
-            .await;
-
-            assert_eq!(authenticated_resp.status(), StatusCode::OK);
-        }
+        protect_urls_test(&survey_protected_urls, data, survey_cookie).await;
     }
 }

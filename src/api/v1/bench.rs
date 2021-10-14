@@ -17,7 +17,7 @@
 use std::borrow::Cow;
 use std::str::FromStr;
 
-use actix_identity::Identity;
+use actix_session::Session;
 use actix_web::{http, web, HttpResponse, Responder};
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,8 @@ use uuid::Uuid;
 use super::{get_uuid, RedirectQuery};
 use crate::errors::*;
 use crate::AppData;
+
+pub const SURVEY_USER_ID: &str = "survey_user_id";
 
 pub mod routes {
 
@@ -124,11 +126,11 @@ pub mod runners {
 #[my_codegen::get(path = "crate::V1_API_ROUTES.benches.register")]
 async fn register(
     data: AppData,
-    id: Identity,
+    session: Session,
     path: web::Query<RedirectQuery>,
 ) -> ServiceResult<HttpResponse> {
     let uuid = runners::register_runner(&data).await?;
-    id.remember(uuid.to_string());
+    session.insert(SURVEY_USER_ID, uuid.to_string()).unwrap();
     let path = path.into_inner();
     if let Some(redirect_to) = path.redirect_to {
         Ok(HttpResponse::Found()
@@ -159,8 +161,12 @@ pub struct SubmissionProof {
     pub proof: String,
 }
 
-fn get_check_login() -> crate::CheckLogin<routes::Benches> {
-    crate::CheckLogin::new(crate::V1_API_ROUTES.benches)
+pub fn get_check_login() -> crate::CheckLogin<routes::Benches> {
+    use crate::middleware::auth::*;
+    CheckLogin::new(
+        crate::V1_API_ROUTES.benches,
+        AuthenticatedSession::ActixSession,
+    )
 }
 
 #[my_codegen::post(
@@ -169,11 +175,11 @@ fn get_check_login() -> crate::CheckLogin<routes::Benches> {
 )]
 async fn submit(
     data: AppData,
-    id: Identity,
+    session: Session,
     payload: web::Json<Submission>,
     path: web::Path<String>,
 ) -> ServiceResult<impl Responder> {
-    let username = id.identity().unwrap();
+    let username = session.get::<String>(SURVEY_USER_ID).unwrap().unwrap();
     let path = path.into_inner();
     let campaign_id = Uuid::parse_str(&path).map_err(|_| ServiceError::NotAnId)?;
 
