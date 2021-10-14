@@ -37,7 +37,7 @@ pub mod assets {
     lazy_static! {
         pub static ref LOGO: Img = Img {
             path: FILES.get("./static/cache/img/logo.svg").unwrap(),
-            name: "Kaizen logo"
+            name: "mCaptcha logo"
         };
         pub static ref TRASH: Img = Img {
             path: FILES.get("./static/cache/img/trash.svg").unwrap(),

@@ -22,7 +22,7 @@ mod panel;
 pub mod routes;
 //mod sitemap;
 
-pub const NAME: &str = "Kaizen";
+pub const NAME: &str = "mCaptcha Survey";
 
 pub fn services(cfg: &mut ServiceConfig) {
     auth::services(cfg);
