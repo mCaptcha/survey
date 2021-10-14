@@ -5,3 +5,4 @@ cobertura.xml
 coverage/
 node_modules/
 /static/cache/bundle/*
+scripts/creds.py
