@@ -1,7 +1,6 @@
 debug = true
 allow_registration = true
 source_code = "https://github.com/mcaptcha/survey"
-password = "password"
 default_campaign = "b6b261fa-3ef9-4d7f-8852-339b8f81bb01"
 
 [server]
