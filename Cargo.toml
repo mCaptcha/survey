@@ -28,14 +28,14 @@ actix-http = "3.0.0-beta.8"
 actix-rt = "2"
 actix-cors = "0.6.0-beta.2"
 actix-service = "2.0.0"
-actix = "0.12"
+#actix = "0.12"
 my-codegen = {package = "actix-web-codegen", git ="https://github.com/realaravinth/actix-web"}
 
-libmcaptcha = { branch = "master", git = "https://github.com/mCaptcha/libmcaptcha", features = ["full"] }
+#libmcaptcha = { branch = "master", git = "https://github.com/mCaptcha/libmcaptcha", features = ["full"] }
 
 futures = "0.3.15"
 
-sqlx = { version = "0.5.5", features = [ "runtime-actix-rustls", "postgres", "time", "offline" ] }
+sqlx = { version = "0.5.9", features = [ "runtime-actix-rustls", "postgres", "time", "offline" ] }
 
 argon2-creds = { branch = "master", git = "https://github.com/realaravinth/argon2-creds"}
 
@@ -64,14 +64,12 @@ rust-embed = "6.0.0"
 cache-buster = { git = "https://github.com/realaravinth/cache-buster" }
 mime = "0.3.16"
 
-openssl = { version = "0.10.29", features = ["vendored"] }
-
 sailfish = "0.3.2"
 
-tokio = "1.11.0"
+#tokio = "1.11.0"
 
 [build-dependencies]
-sqlx = { version = "0.5.5", features = [ "runtime-actix-rustls", "uuid", "postgres", "time", "offline" ] }
+sqlx = { version = "0.5.9", features = [ "runtime-actix-rustls", "uuid", "postgres", "time", "offline" ] }
 #serde_yaml = "0.8.17"
 serde_json = "1"
 #yaml-rust = "0.4.5"

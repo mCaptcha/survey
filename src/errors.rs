@@ -16,7 +16,7 @@
 */
 use std::convert::From;
 
-use actix::MailboxError;
+//use actix::MailboxError;
 use argon2_creds::errors::CredsError;
 
 use actix_web::{
@@ -25,9 +25,9 @@ use actix_web::{
     HttpResponse, HttpResponseBuilder,
 };
 use derive_more::{Display, Error};
-use libmcaptcha::errors::CaptchaError;
+//use libmcaptcha::errors::CaptchaError;
 use serde::{Deserialize, Serialize};
-use tokio::sync::oneshot::error::RecvError;
+//use tokio::sync::oneshot::error::RecvError;
 
 #[derive(Debug, Display, PartialEq, Error)]
 #[cfg(not(tarpaulin_include))]
@@ -79,9 +79,8 @@ pub enum ServiceError {
     PasswordTooLong,
     #[display(fmt = "Passwords don't match")]
     PasswordsDontMatch,
-
-    #[display(fmt = "{}", _0)]
-    CaptchaError(CaptchaError),
+    //    #[display(fmt = "{}", _0)]
+    //    CaptchaError(CaptchaError),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -124,25 +123,24 @@ impl ResponseError for ServiceError {
             ServiceError::PasswordTooShort => StatusCode::BAD_REQUEST,
             ServiceError::PasswordTooLong => StatusCode::BAD_REQUEST,
             ServiceError::PasswordsDontMatch => StatusCode::BAD_REQUEST,
-
-            ServiceError::CaptchaError(e) => {
-                log::error!("{}", e);
-                match e {
-                    CaptchaError::MailboxError => StatusCode::INTERNAL_SERVER_ERROR,
-                    _ => StatusCode::BAD_REQUEST,
-                }
-            }
+            //            ServiceError::CaptchaError(e) => {
+            //                log::error!("{}", e);
+            //                match e {
+            //                    CaptchaError::MailboxError => StatusCode::INTERNAL_SERVER_ERROR,
+            //                    _ => StatusCode::BAD_REQUEST,
+            //                }
+            //            }
         }
     }
 }
 
-#[cfg(not(tarpaulin_include))]
-impl From<CaptchaError> for ServiceError {
-    fn from(e: CaptchaError) -> ServiceError {
-        ServiceError::CaptchaError(e)
-    }
-}
-
+//#[cfg(not(tarpaulin_include))]
+//impl From<CaptchaError> for ServiceError {
+//    fn from(e: CaptchaError) -> ServiceError {
+//        ServiceError::CaptchaError(e)
+//    }
+//}
+//
 #[cfg(not(tarpaulin_include))]
 impl From<sqlx::Error> for ServiceError {
     #[cfg(not(tarpaulin_include))]
@@ -166,23 +164,23 @@ impl From<CredsError> for ServiceError {
     }
 }
 
-#[cfg(not(tarpaulin_include))]
-impl From<RecvError> for ServiceError {
-    #[cfg(not(tarpaulin_include))]
-    fn from(e: RecvError) -> Self {
-        log::error!("{:?}", e);
-        ServiceError::InternalServerError
-    }
-}
+//#[cfg(not(tarpaulin_include))]
+//impl From<RecvError> for ServiceError {
+//    #[cfg(not(tarpaulin_include))]
+//    fn from(e: RecvError) -> Self {
+//        log::error!("{:?}", e);
+//        ServiceError::InternalServerError
+//    }
+//}
 
-#[cfg(not(tarpaulin_include))]
-impl From<MailboxError> for ServiceError {
-    #[cfg(not(tarpaulin_include))]
-    fn from(e: MailboxError) -> Self {
-        log::error!("{:?}", e);
-        ServiceError::InternalServerError
-    }
-}
+//#[cfg(not(tarpaulin_include))]
+//impl From<MailboxError> for ServiceError {
+//    #[cfg(not(tarpaulin_include))]
+//    fn from(e: MailboxError) -> Self {
+//        log::error!("{:?}", e);
+//        ServiceError::InternalServerError
+//    }
+//}
 
 #[cfg(not(tarpaulin_include))]
 pub type ServiceResult<V> = std::result::Result<V, ServiceError>;
@@ -192,6 +190,9 @@ pub type ServiceResult<V> = std::result::Result<V, ServiceError>;
 pub enum PageError {
     #[display(fmt = "Something weng wrong: Internal server error")]
     InternalServerError,
+
+    #[display(fmt = "The page you are looking for doesn't exist")]
+    PageDoesntExist,
 
     #[display(fmt = "{}", _0)]
     ServiceError(ServiceError),
@@ -230,6 +231,7 @@ impl ResponseError for PageError {
     fn status_code(&self) -> StatusCode {
         match self {
             PageError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            PageError::PageDoesntExist => StatusCode::NOT_FOUND,
             PageError::ServiceError(e) => e.status_code(),
         }
     }
