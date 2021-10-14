@@ -37,6 +37,7 @@ frontend: ## Build frontend assets
 lint: ## Lint codebase
 	cargo fmt -v --all -- --emit files
 	cargo clippy --workspace --tests --all-features
+	yarn lint
 
 migrate: ## Run database migrations
 	cargo run --bin tests-migrate

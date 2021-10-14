@@ -15,16 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "./router";
+const ROUTES = {
+  bench: (key: string): string => `/survey/campaigns/${key}/bench/`,
+};
 
-import * as BENCH from "./bench/index";
-import VIEWS from "./views/v1/routes";
-const router = new Router();
-
-router.register(VIEWS.bench("(?=.*-)[a-zA-Z0-9-]+"), BENCH.index);
-
-try {
-  router.route();
-} catch (e) {
-  console.error(e);
-}
+export default ROUTES;

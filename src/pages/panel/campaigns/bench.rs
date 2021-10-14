@@ -26,7 +26,7 @@ use crate::errors::*;
 use crate::PAGES;
 
 #[derive(TemplateOnce, Default)]
-#[template(path = "bench.html")]
+#[template(path = "bench/index.html")]
 struct Bench;
 const PAGE: &str = "Survey";
 
