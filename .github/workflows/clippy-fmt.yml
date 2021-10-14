@@ -11,6 +11,16 @@ jobs:
   fmt:
     runs-on: ubuntu-latest
     steps:
+      - name: ⚡ Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            node_modules/
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: actions/checkout@v2
 
       - name: Install Rust
@@ -27,6 +37,16 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
+      - name: ⚡ Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            node_modules/
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: actions/checkout@v2
 
       - name: Install Rust
@@ -41,3 +61,24 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --workspace --tests --all-features
+
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⚡ Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            node_modules/
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: actions/checkout@v2
+
+      - name: build frtontend
+        run: make frontend
+
+      - name: lint frontend
+        run: yarn lint
