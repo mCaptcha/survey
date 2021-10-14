@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  mcaptchas-survey:
+    build: .
+    ports:
+      - 7000:7000
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/postgres # set password at placeholder
+      RUST_LOG: debug
+
+  postgres:
+    image: postgres:13.2
+    volumes:
+      - mcaptcha-survey-data:/var/lib/postgresql/
+    environment:
+      POSTGRES_PASSWORD: password # change password
+      PGDATA: /var/lib/postgresql/data/mcaptcha/
+
+volumes:
+  mcaptcha-survey-data:
