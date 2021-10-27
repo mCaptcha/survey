@@ -132,6 +132,7 @@ mod tests {
             assets::HEADSETS.path,
             *crate::JS,
             *crate::CSS,
+            *crate::MOBILE_CSS,
             *crate::GLUE,
         ]
         .iter()

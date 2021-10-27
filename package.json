@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "build": "webpack --mode production",
-    "lint": "eslint templates", 
-    "sass": "dart-sass -s compressed templates/main.scss  ./static/cache/bundle/css/main.css",
+    "lint": "eslint templates",
+    "sass": "dart-sass -s compressed templates/main.scss  ./static/cache/bundle/css/main.css && dart-sass -s compressed templates/mobile.scss  ./static/cache/bundle/css/mobile.css",
     "start": "webpack-dev-server --mode development --progress --color",
     "test": "jest"
   },

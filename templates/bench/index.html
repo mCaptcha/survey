@@ -1,7 +1,7 @@
 <. include!("../components/base/top.html"); .>
 <body class="survey__body">
   <main class="survey__container">
-<. include!("../components/error/index.html"); .>
+    <. include!("../components/error/index.html"); .>
     <div id="pre-bench">
       <h1>Click to Start Benchmark</h1>
       <form class="new-campaign__form" accept-charset="utf-8">
@@ -17,9 +17,7 @@
         </label>
 
         <!--        <button id="start" type="submit">Start</button> -->
-        <button id="start" class="form__submit" type="submit">
-          Start
-        </button>
+        <button id="start" class="form__submit" type="submit">Start</button>
       </form>
     </div>
 
@@ -27,7 +25,7 @@
       <b>
         This is a WASM benchmark, please enable JavScript to run it. We don't
         collect any data and
-        <a href="https://github.com/mCaptcha/benches"
+        <a href="https://github.com/mCaptcha/survey"
           >source code is available here</a
         >
       </b>
@@ -35,13 +33,22 @@
 
     <div id="bench">
       <h1 id="status" class="name">Running benchmark</h1>
-
-      <div id="submission-proof"></div>
-      <div id="device-info"></div>
-
       <div id="counter"></div>
+      <button class="btn" id="advance">Show Advanced Log</button>
 
-      <table>
+      <div id="winner-instructions">
+        <h2>Winner Announcement</h2>
+        <p>
+          The winners will be announed on the organisation website on December
+          1, 2021. The winning submission IDs will be published and the winners
+          expected to provide the submission proof to claim their rewards.
+        </p>
+      </div>
+      <div id="submission-proof"></div>
+
+      <div class="advance-log" id="device-info"></div>
+
+      <table class="advance-log">
         <thead>
           <tr>
             <th>Difficulty factor</th>
@@ -59,7 +66,7 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    padding: 40px 0;
+    padding: 0;
     display: hidden;
     align-items: center;
   }
@@ -75,6 +82,11 @@
 
   #bench {
     display: none;
+  }
+
+  .survey__container {
+    flex: 2;
+    margin: 0 auto;
   }
 
   #status {
@@ -101,7 +113,28 @@
 
   #device-info {
     margin: auto;
-    font-size: 1.3rem;
+    font-size: 0.8rem;
+  }
+
+  .advance-log > b,
+  div {
+    font-size: 0.8rem;
+  }
+  .advance-log {
+    display: none;
+  }
+  #winner-instructions {
+    display: none;
+  }
+
+  #submission-proof {
+    margin: 15px auto;
+  }
+
+  #submission-proof > div,
+  b {
+    font-size: 1.2rem;
+    font-family: monospace, monospace;
   }
 </style>
 <script src="<.= &*crate::GLUE .>"></script>

@@ -15,23 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@mixin button {
-	border: none;
+.survey__container {
+	width: 90%;
+}
 
-	//	margin: 10px 0;
-	//	background-color: none;
-	background-color: #b4345b;
-	color: #fff;
-	//	text-align: center;
+.footer {
+	margin: auto;
+	width: auto;
+}
 
-	border-radius: 0px;
-
-	padding: 0.1rem 0.75rem;
-	font-weight: 400;
-	text-align: center;
-	line-height: 1.2rem;
-	white-space: nowrap;
-	vertical-align: middle;
-	user-select: none;
-	border: 1px solid transparent;
+.survey__container h2 {
+	font-weight: 550;
 }

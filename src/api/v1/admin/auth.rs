@@ -36,14 +36,18 @@ pub mod routes {
     impl GetLoginRoute for Auth {
         fn get_login_route(&self, src: Option<&str>) -> String {
             if let Some(redirect_to) = src {
-                let mut url = Url::parse("http://x/").unwrap();
-                url.set_path(self.login);
-                url.query_pairs_mut()
-                    .append_pair("redirect_to", redirect_to);
-                let path = format!("{}/?{}", url.path(), url.query().unwrap());
-                path
+                //                uri::Builder::new().path_and_query(
+                format!(
+                    "{}?redirect_to={}",
+                    self.register,
+                    urlencoding::encode(redirect_to)
+                )
+            //                let mut url: Uri = self.register.parse().unwrap();
+            //                url.qu
+            //                url.query_pairs_mut()
+            //                    .append_pair("redirect_to", redirect_to);
             } else {
-                self.login.to_string()
+                self.register.to_string()
             }
         }
     }

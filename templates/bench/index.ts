@@ -21,6 +21,25 @@ import isBlankString from "../utils/isBlankString";
 import createError from "../components/error/";
 
 export const index = () => {
+  const ADV = <HTMLButtonElement>document.getElementById("advance");
+
+  const toggleAdv = (e: Event) => {
+    e.preventDefault();
+    if (ADV.innerText.includes("Show")) {
+      ADV.innerText = "Hide Advance Log";
+      document
+        .querySelectorAll(".advance-log")
+        .forEach((e: HTMLElement) => (e.style.display = "block"));
+    } else {
+      ADV.innerText = "Show Advance Log";
+      document
+        .querySelectorAll(".advance-log")
+        .forEach((e: HTMLElement) => (e.style.display = "none"));
+    }
+  };
+
+  ADV.addEventListener("click", (e) => toggleAdv(e));
+
   const initSession = async () => {
     fetch(ROUTES.register);
   };
@@ -64,7 +83,7 @@ export const index = () => {
       const data: SubmissionProof = await resp.json();
       const element = document.createElement("div");
       const token = document.createElement("b");
-      token.innerText = "User Agent: ";
+      token.innerText = "Submissinon ID: ";
       const tokenText = document.createTextNode(`${data.token}`);
 
       const proof = document.createElement("b");
@@ -77,6 +96,7 @@ export const index = () => {
       element.appendChild(proof);
       element.appendChild(proofText);
       document.getElementById("submission-proof").appendChild(element);
+      document.getElementById("winner-instructions").style.display = "block";
     }
   };
 
@@ -90,11 +110,11 @@ export const index = () => {
     console.log(INFO);
 
     const element = document.createElement("div");
-    const ua = document.createElement("b");
+    const ua = document.createElement("span");
     ua.innerText = "User Agent: ";
     const os = document.createTextNode(`${INFO.oscup}`);
 
-    const threads = document.createElement("b");
+    const threads = document.createElement("span");
     threads.innerText = "Hardware concurrency: ";
     const threadsText = document.createTextNode(`${INFO.threads}`);
 
