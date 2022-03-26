@@ -164,9 +164,9 @@ dependencies = [
 
 [[package]]
 name = "actix-session"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a05f9a08018659f1dc02974580ec82e978a68faca0507b7267e76ba613fd639"
+checksum = "0c9138a66462f1e65da829f9c0de81b44a96dfe193a4f19bfea32ee2be312368"
 dependencies = [
  "actix-service",
  "actix-utils",
@@ -204,7 +204,7 @@ dependencies = [
  "actix-server",
  "actix-service",
  "actix-utils",
- "actix-web-codegen 4.0.0",
+ "actix-web-codegen 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ahash",
  "bytes",
  "bytestring",
@@ -232,8 +232,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web-codegen"
-version = "0.5.0-rc.2"
-source = "git+https://github.com/realaravinth/actix-web#d3881fe107fc8b7301ff36130e0725bd81f4c05c"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7525bedf54704abb1d469e88d7e7e9226df73778798a69cea5022d53b2ae91bc"
 dependencies = [
  "actix-router",
  "proc-macro2",
@@ -244,8 +245,7 @@ dependencies = [
 [[package]]
 name = "actix-web-codegen"
 version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7525bedf54704abb1d469e88d7e7e9226df73778798a69cea5022d53b2ae91bc"
+source = "git+https://github.com/realaravinth/actix-web#8a399b6e7ea6ffdf241d07a9e907b1afff7e0fe6"
 dependencies = [
  "actix-router",
  "proc-macro2",
@@ -385,9 +385,9 @@ checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
 
 [[package]]
 name = "async-trait"
-version = "0.1.52"
+version = "0.1.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "061a7acccaa286c011ddc30970520b98fa40e00c9d644633fb26b5fc63a265e3"
+checksum = "ed6aa3524a2dfcf9fe180c51eae2b58738348d819517ceadf95789c51fff7600"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1784,9 +1784,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
-version = "1.0.16"
+version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4af2ec4714533fcdf07e886f17025ace8b997b9ce51204ee69b6da831c3da57"
+checksum = "632d02bff7f874a36f33ea8bb416cd484b90cc66c1194b1a1110d067a7013f58"
 dependencies = [
  "proc-macro2",
 ]
@@ -2494,7 +2494,7 @@ dependencies = [
  "actix-service",
  "actix-session",
  "actix-web",
- "actix-web-codegen 0.5.0-rc.2",
+ "actix-web-codegen 4.0.0 (git+https://github.com/realaravinth/actix-web)",
  "argon2-creds",
  "cache-buster",
  "config",
