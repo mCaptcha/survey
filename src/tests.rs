@@ -19,7 +19,13 @@ use std::sync::Arc;
 
 use actix_web::cookie::Cookie;
 use actix_web::test;
-use actix_web::{dev::ServiceResponse, error::ResponseError, http::StatusCode};
+use actix_web::{
+    body::{BoxBody, EitherBody},
+    dev::ServiceResponse,
+    error::ResponseError,
+    http::StatusCode,
+};
+
 use lazy_static::lazy_static;
 use serde::Serialize;
 use uuid::Uuid;
@@ -110,7 +116,7 @@ pub async fn register_and_signin(
     name: &str,
     email: &str,
     password: &str,
-) -> (Arc<data::Data>, Login, ServiceResponse) {
+) -> (Arc<Data>, Login, ServiceResponse<EitherBody<BoxBody>>) {
     register(name, email, password).await;
     signin(name, password).await
 }
@@ -136,7 +142,10 @@ pub async fn register(name: &str, email: &str, password: &str) {
 }
 
 /// signin util
-pub async fn signin(name: &str, password: &str) -> (Arc<Data>, Login, ServiceResponse) {
+pub async fn signin(
+    name: &str,
+    password: &str,
+) -> (Arc<Data>, Login, ServiceResponse<EitherBody<BoxBody>>) {
     let data = Data::new().await;
     let app = get_app!(data.clone()).await;
 
@@ -226,7 +235,7 @@ pub async fn create_new_campaign(
     uuid
 }
 
-pub async fn get_survey_user(data: Arc<Data>) -> ServiceResponse {
+pub async fn get_survey_user(data: Arc<Data>) -> ServiceResponse<EitherBody<BoxBody>> {
     let app = get_app!(data).await;
     let signin_resp = test::call_service(
         &app,
@@ -306,6 +315,11 @@ pub async fn submit_bench(
         post_request!(&payload, &route).cookie(cookies).to_request(),
     )
     .await;
+    if add_feedback_resp.status() != StatusCode::OK {
+        let headers = add_feedback_resp.headers();
+        println!("{:#?}", headers);
+    }
+
     assert_eq!(add_feedback_resp.status(), StatusCode::OK);
 
     let proof: SubmissionProof = test::read_body_json(add_feedback_resp).await;

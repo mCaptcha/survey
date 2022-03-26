@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+use actix_auth_middleware::*;
 use actix_web::web::ServiceConfig;
 
 pub mod auth;
@@ -30,9 +30,8 @@ pub fn services(cfg: &mut ServiceConfig) {
     errors::services(cfg);
 }
 
-pub fn get_page_check_login() -> crate::CheckLogin<auth::routes::Auth> {
-    use crate::middleware::auth::*;
-    CheckLogin::new(crate::PAGES.auth, AuthenticatedSession::ActixIdentity)
+pub fn get_page_check_login() -> Authentication<auth::routes::Auth> {
+    Authentication::with_identity(crate::PAGES.auth)
 }
 
 #[cfg(not(tarpaulin_include))]

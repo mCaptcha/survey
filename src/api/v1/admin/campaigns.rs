@@ -352,10 +352,10 @@ mod tests {
     use crate::api::v1::bench::Submission;
     use crate::data::Data;
     use crate::errors::*;
-    use crate::middleware::auth::GetLoginRoute;
     use crate::tests::*;
     use crate::*;
 
+    use actix_auth_middleware::GetLoginRoute;
     use actix_web::{http::header, test};
 
     #[actix_rt::test]

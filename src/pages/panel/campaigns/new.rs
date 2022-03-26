@@ -60,7 +60,7 @@ lazy_static! {
 pub async fn new_campaign() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(&*INDEX)
+        .body(&*INDEX.as_str())
 }
 
 #[post(

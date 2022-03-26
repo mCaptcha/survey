@@ -1,82 +1,82 @@
 {
   "db": "PostgreSQL",
   "03c9789e83a398bed96354924a0e63ccaa97bec667fda1b8277bb9afda9a6fcd": {
-    "query": "DELETE \n            FROM survey_campaigns \n         WHERE \n             user_id = (\n                 SELECT \n                         ID \n                 FROM \n                         survey_admins \n                 WHERE \n                         name = $1\n             )\n         AND\n            id = ($2)",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Text",
           "Uuid"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "DELETE \n            FROM survey_campaigns \n         WHERE \n             user_id = (\n                 SELECT \n                         ID \n                 FROM \n                         survey_admins \n                 WHERE \n                         name = $1\n             )\n         AND\n            id = ($2)"
   },
   "0d22134cc5076304b7895827f006ee8269cc500f400114a7472b83f0f1c568b5": {
-    "query": "INSERT INTO survey_admins \n        (name , password,  secret) VALUES ($1, $2, $3)",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Varchar",
           "Text",
           "Varchar"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "INSERT INTO survey_admins \n        (name , password,  secret) VALUES ($1, $2, $3)"
   },
   "1373df097fa0e58b23a374753318ae53a44559aa0e7eb64680185baf1c481723": {
-    "query": "SELECT password  FROM survey_admins WHERE name = ($1)",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "password",
+          "ordinal": 0,
           "type_info": "Text"
         }
+      ],
+      "nullable": [
+        false
       ],
       "parameters": {
         "Left": [
           "Text"
         ]
-      },
-      "nullable": [
-        false
-      ]
-    }
+      }
+    },
+    "query": "SELECT password  FROM survey_admins WHERE name = ($1)"
   },
   "19686bfe8772cbc6831d46d18994e2b9aa40c7181eae9a31e51451cce95f04e8": {
-    "query": "SELECT name, password  FROM survey_admins WHERE email = ($1)",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "name",
+          "ordinal": 0,
           "type_info": "Varchar"
         },
         {
-          "ordinal": 1,
           "name": "password",
+          "ordinal": 1,
           "type_info": "Text"
         }
+      ],
+      "nullable": [
+        false,
+        false
       ],
       "parameters": {
         "Left": [
           "Text"
         ]
-      },
-      "nullable": [
-        false,
-        false
-      ]
-    }
+      }
+    },
+    "query": "SELECT name, password  FROM survey_admins WHERE email = ($1)"
   },
   "1b7e17bfc949fa97e8dec1f95e35a02bcf3aa1aa72a1f6f6c8884e885fc3b953": {
-    "query": "insert into survey_admins \n        (name , password, email, secret) values ($1, $2, $3, $4)",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Varchar",
@@ -84,152 +84,152 @@
           "Varchar",
           "Varchar"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "insert into survey_admins \n        (name , password, email, secret) values ($1, $2, $3, $4)"
   },
   "2ccaecfee4d2f29ef5278188b304017719720aa986d680d4727a1facbb869c7a": {
-    "query": "DELETE FROM survey_admins WHERE name = ($1)",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Text"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "DELETE FROM survey_admins WHERE name = ($1)"
   },
   "43b3e771f38bf8059832169227705be06a28925af1b3799ffef5371d511fd138": {
-    "query": "\n             INSERT INTO survey_users (created_at, id) VALUES($1, $2)",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Timestamptz",
           "Uuid"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "\n             INSERT INTO survey_users (created_at, id) VALUES($1, $2)"
   },
   "536541ecf2e1c0403c74b6e2e09b42b73a7741ae4a348ff539ac410022e03ace": {
-    "query": "SELECT EXISTS (SELECT 1 from survey_admins WHERE name = $1)",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "exists",
+          "ordinal": 0,
           "type_info": "Bool"
         }
+      ],
+      "nullable": [
+        null
       ],
       "parameters": {
         "Left": [
           "Text"
         ]
-      },
-      "nullable": [
-        null
-      ]
-    }
+      }
+    },
+    "query": "SELECT EXISTS (SELECT 1 from survey_admins WHERE name = $1)"
   },
   "55dde28998a6d12744806035f0a648494a403c7d09ea3caf91bf54869a81aa73": {
-    "query": "UPDATE survey_admins set password = $1\n        WHERE name = $2",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Text",
           "Text"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "UPDATE survey_admins set password = $1\n        WHERE name = $2"
   },
   "58ec3b8f98c27e13ec2732f8ee23f6eb9845ac5d9fd97b1e5c9f2eed4b1f5693": {
-    "query": "SELECT name \n     FROM survey_campaigns\n     WHERE \n         id = $1\n     AND\n        user_id = (SELECT ID from survey_admins WHERE name = $2)",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "name",
+          "ordinal": 0,
           "type_info": "Varchar"
         }
+      ],
+      "nullable": [
+        false
       ],
       "parameters": {
         "Left": [
           "Uuid",
           "Text"
         ]
-      },
-      "nullable": [
-        false
-      ]
-    }
+      }
+    },
+    "query": "SELECT name \n     FROM survey_campaigns\n     WHERE \n         id = $1\n     AND\n        user_id = (SELECT ID from survey_admins WHERE name = $2)"
   },
   "683707dbc847b37c58c29aaad0d1a978c9fe0657da13af99796e4461134b5a43": {
-    "query": "UPDATE survey_admins set email = $1\n        WHERE name = $2",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Varchar",
           "Text"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "UPDATE survey_admins set email = $1\n        WHERE name = $2"
   },
   "6a26daa84578aed2b2085697cb8358ed7c0a50ba9597fd387b4b09b0a8a154db": {
-    "query": "SELECT EXISTS (SELECT 1 from survey_admins WHERE email = $1)",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "exists",
+          "ordinal": 0,
           "type_info": "Bool"
         }
       ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
       "nullable": [
         null
-      ]
-    }
-  },
-  "70cc7bfc9b6ff5b68db70c069c0947d51bfc4a53cedc020016ee25ff98586c93": {
-    "query": "SELECT \n            name, id\n        FROM \n            survey_campaigns \n            WHERE\n                user_id = (\n                    SELECT \n                        ID\n                    FROM \n                        survey_admins\n                    WHERE\n                        name = $1\n                )",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 1,
-          "name": "id",
-          "type_info": "Uuid"
-        }
       ],
       "parameters": {
         "Left": [
           "Text"
         ]
-      },
+      }
+    },
+    "query": "SELECT EXISTS (SELECT 1 from survey_admins WHERE email = $1)"
+  },
+  "70cc7bfc9b6ff5b68db70c069c0947d51bfc4a53cedc020016ee25ff98586c93": {
+    "describe": {
+      "columns": [
+        {
+          "name": "name",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "id",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        }
+      ],
       "nullable": [
         false,
         false
-      ]
-    }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT \n            name, id\n        FROM \n            survey_campaigns \n            WHERE\n                user_id = (\n                    SELECT \n                        ID\n                    FROM \n                        survey_admins\n                    WHERE\n                        name = $1\n                )"
   },
   "82feafc36533144e49ba374c8c47ca4aa0d6558a9803778ad28cfa7b62382c3e": {
-    "query": "\n                INSERT INTO survey_campaigns (\n                    user_id, ID, name, difficulties, created_at\n                    ) VALUES(\n                        (SELECT id FROM survey_admins WHERE name = $1),\n                        $2, $3, $4, $5\n                    );",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Text",
@@ -238,82 +238,82 @@
           "Int4Array",
           "Timestamptz"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "\n                INSERT INTO survey_campaigns (\n                    user_id, ID, name, difficulties, created_at\n                    ) VALUES(\n                        (SELECT id FROM survey_admins WHERE name = $1),\n                        $2, $3, $4, $5\n                    );"
   },
   "8320dda2b3e107d1451fdfb35eb2a4b8e97364e7b1b74ffe4d6913faf132fb61": {
-    "query": "SELECT ID \n         FROM survey_responses \n         WHERE \n             user_id = $1 \n         AND \n             device_software_recognised = $2;",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "id",
+          "ordinal": 0,
           "type_info": "Int4"
         }
+      ],
+      "nullable": [
+        false
       ],
       "parameters": {
         "Left": [
           "Uuid",
           "Text"
         ]
-      },
-      "nullable": [
-        false
-      ]
-    }
+      }
+    },
+    "query": "SELECT ID \n         FROM survey_responses \n         WHERE \n             user_id = $1 \n         AND \n             device_software_recognised = $2;"
   },
   "9cdade613ce724631cc3f187510758ee0929e93ff3f8ce81fe35594756644246": {
-    "query": "SELECT difficulties FROM survey_campaigns WHERE id = $1;",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "difficulties",
+          "ordinal": 0,
           "type_info": "Int4Array"
         }
+      ],
+      "nullable": [
+        false
       ],
       "parameters": {
         "Left": [
           "Uuid"
         ]
-      },
-      "nullable": [
-        false
-      ]
-    }
+      }
+    },
+    "query": "SELECT difficulties FROM survey_campaigns WHERE id = $1;"
   },
   "a721cfa249acf328c2f29c4cf8c2aeba1a635bcf49d18ced5474caa10b7cae4f": {
-    "query": "INSERT INTO survey_benches \n                (resp_id, difficulty, duration) \n            VALUES ($1, $2, $3);",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Int4",
           "Int4",
           "Float4"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "INSERT INTO survey_benches \n                (resp_id, difficulty, duration) \n            VALUES ($1, $2, $3);"
   },
   "ab951c5c318174c6538037947c2f52c61bcfe5e5be1901379b715e77f5214dd2": {
-    "query": "UPDATE survey_admins set secret = $1\n        WHERE name = $2",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Varchar",
           "Text"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "UPDATE survey_admins set secret = $1\n        WHERE name = $2"
   },
   "b4cd1e5240de1968c8b6d56672cec639b22f41ebf2754dadbf00efe0948c7e68": {
-    "query": "INSERT INTO survey_responses (\n                        user_id, \n                        campaign_id,\n                        device_user_provided,\n                        device_software_recognised,\n                        threads\n                    ) VALUES ($1, $2, $3, $4, $5);",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Uuid",
@@ -322,55 +322,55 @@
           "Varchar",
           "Int4"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "INSERT INTO survey_responses (\n                        user_id, \n                        campaign_id,\n                        device_user_provided,\n                        device_software_recognised,\n                        threads\n                    ) VALUES ($1, $2, $3, $4, $5);"
   },
   "c757589ef26a005e3285e7ab20d8a44c4f2e1cb125f8db061dd198cc380bf807": {
-    "query": "UPDATE survey_admins set name = $1\n        WHERE name = $2",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Varchar",
           "Text"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "UPDATE survey_admins set name = $1\n        WHERE name = $2"
   },
   "e9cf5d6d8c9e8327d5c809d47a14a933f324e267f1e7dbb48e1caf1c021adc3f": {
-    "query": "SELECT secret  FROM survey_admins WHERE name = ($1)",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "secret",
+          "ordinal": 0,
           "type_info": "Varchar"
         }
+      ],
+      "nullable": [
+        false
       ],
       "parameters": {
         "Left": [
           "Text"
         ]
-      },
-      "nullable": [
-        false
-      ]
-    }
+      }
+    },
+    "query": "SELECT secret  FROM survey_admins WHERE name = ($1)"
   },
   "fcdc5fe5d496eb516c805e64ec96d9626b74ab33cd6e75e5a08ae88967403b72": {
-    "query": "INSERT INTO survey_response_tokens \n            (resp_id, user_id, id)\n            VALUES ($1, $2, $3);",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Int4",
           "Uuid",
           "Uuid"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "INSERT INTO survey_response_tokens \n            (resp_id, user_id, id)\n            VALUES ($1, $2, $3);"
   }
 }

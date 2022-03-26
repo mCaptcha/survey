@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use actix_auth_middleware::*;
 use actix_web::web::ServiceConfig;
 
 pub mod account;
@@ -23,6 +24,7 @@ pub mod campaigns;
 mod tests;
 
 pub use super::{get_random, get_uuid, RedirectQuery};
+use crate::api::v1::bench::SURVEY_USER_ID;
 
 pub fn services(cfg: &mut ServiceConfig) {
     auth::services(cfg);
@@ -30,12 +32,8 @@ pub fn services(cfg: &mut ServiceConfig) {
     campaigns::services(cfg);
 }
 
-pub fn get_admin_check_login() -> crate::CheckLogin<auth::routes::Auth> {
-    use crate::middleware::auth::*;
-    CheckLogin::new(
-        crate::V1_API_ROUTES.admin.auth,
-        AuthenticatedSession::ActixIdentity,
-    )
+pub fn get_admin_check_login() -> Authentication<auth::routes::Auth> {
+    Authentication::with_identity(super::ROUTES.admin.auth)
 }
 
 pub mod routes {

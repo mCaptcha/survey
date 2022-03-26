@@ -18,6 +18,7 @@ use std::env;
 use std::sync::Arc;
 
 use actix_identity::{CookieIdentityPolicy, IdentityService};
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
     error::InternalError, http::StatusCode, middleware as actix_middleware,
     web::JsonConfig, App, HttpServer,
@@ -28,7 +29,6 @@ use log::info;
 mod api;
 mod data;
 mod errors;
-mod middleware;
 mod pages;
 mod settings;
 mod static_assets;
@@ -38,7 +38,6 @@ mod tests;
 
 pub use crate::data::Data;
 pub use api::v1::ROUTES as V1_API_ROUTES;
-pub use middleware::auth::CheckLogin;
 pub use pages::routes::ROUTES as PAGES;
 pub use settings::Settings;
 pub use static_assets::static_files::assets;
@@ -136,16 +135,17 @@ pub fn get_json_err() -> JsonConfig {
 }
 
 #[cfg(not(tarpaulin_include))]
-pub fn get_survey_session() -> actix_session::CookieSession {
+pub fn get_survey_session() -> actix_session::SessionMiddleware<CookieSessionStore> {
+    use actix_web::cookie::Key;
     let cookie_secret = &SETTINGS.server.cookie_secret2;
-    actix_session::CookieSession::signed(cookie_secret.as_bytes())
-        .lazy(true)
-        .domain(&SETTINGS.server.domain)
-        .name("survey-id")
-        .http_only(true)
-        .path("/")
-        .max_age(30 * 60)
-        .secure(false)
+    let key = Key::from(cookie_secret.as_bytes());
+    SessionMiddleware::builder(CookieSessionStore::default(), key)
+        .cookie_domain(Some(SETTINGS.server.domain.clone()))
+        .cookie_name("survey-id".into())
+        .cookie_path("/".to_string())
+        .cookie_secure(false)
+        .cookie_http_only(true)
+        .build()
 }
 
 #[cfg(not(tarpaulin_include))]

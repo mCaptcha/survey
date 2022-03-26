@@ -26,7 +26,7 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
 }
 
 pub mod routes {
-    use crate::middleware::auth::GetLoginRoute;
+    use actix_auth_middleware::GetLoginRoute;
     use url::Url;
 
     pub struct Auth {

@@ -102,7 +102,7 @@ pub async fn home(data: AppData, id: Identity) -> impl Responder {
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(&page)
+        .body(page)
 }
 
 #[cfg(test)]

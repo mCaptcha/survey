@@ -17,7 +17,9 @@
 use std::borrow::Cow;
 use std::str::FromStr;
 
+use actix_auth_middleware::*;
 use actix_session::Session;
+use actix_web::{dev::Payload, HttpRequest};
 use actix_web::{http, web, HttpResponse, Responder};
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
@@ -32,7 +34,7 @@ pub const SURVEY_USER_ID: &str = "survey_user_id";
 
 pub mod routes {
 
-    use crate::middleware::auth::GetLoginRoute;
+    use actix_auth_middleware::GetLoginRoute;
 
     pub struct Benches {
         pub submit: &'static str,
@@ -173,13 +175,26 @@ pub struct SubmissionProof {
     pub proof: String,
 }
 
-pub fn get_check_login() -> crate::CheckLogin<routes::Benches> {
-    use crate::middleware::auth::*;
-    CheckLogin::new(
-        crate::V1_API_ROUTES.benches,
-        AuthenticatedSession::ActixSession,
+fn is_session_authenticated(r: &HttpRequest, mut pl: &mut Payload) -> bool {
+    use actix_web::FromRequest;
+    matches!(
+        Session::from_request(&r, &mut pl).into_inner().map(|x| {
+            let val = x.get::<String>(SURVEY_USER_ID);
+            println!("{:#?}", val);
+            val
+        }),
+        Ok(Ok(Some(_)))
     )
 }
+
+pub fn get_check_login() -> Authentication<routes::Benches> {
+    Authentication::new(crate::V1_API_ROUTES.benches, is_session_authenticated)
+}
+//
+// pub fn get_auth_middleware() -> Authentication<routes::Routes> {
+//     Authentication::with_identity(V1_API_ROUTES)
+// }
+//}
 
 #[my_codegen::post(
     path = "crate::V1_API_ROUTES.benches.submit",

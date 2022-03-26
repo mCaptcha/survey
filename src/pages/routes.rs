@@ -14,6 +14,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use actix_auth_middleware::GetLoginRoute;
+
 use super::auth::routes::Auth;
 use super::errors::routes::Errors;
 use super::panel::routes::Panel;
@@ -54,6 +56,25 @@ impl Routes {
         let a = Auth::get_sitemap();
         let p = Panel::get_sitemap();
         [a[0], a[1], p[0]] //, p[1], p[2], p[3], p[4]]
+    }
+}
+
+impl GetLoginRoute for Routes {
+    fn get_login_route(&self, src: Option<&str>) -> String {
+        if let Some(redirect_to) = src {
+            //                uri::Builder::new().path_and_query(
+            format!(
+                "{}?redirect_to={}",
+                self.auth.join.to_string(),
+                urlencoding::encode(redirect_to)
+            )
+        //                let mut url: Uri = self.register.parse().unwrap();
+        //                url.qu
+        //                url.query_pairs_mut()
+        //                    .append_pair("redirect_to", redirect_to);
+        } else {
+            self.auth.join.to_string()
+        }
     }
 }
 

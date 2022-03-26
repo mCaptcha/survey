@@ -25,8 +25,8 @@ use crate::errors::*;
 use crate::AppData;
 
 pub mod routes {
-    use crate::middleware::auth::GetLoginRoute;
-    use url::Url;
+    use actix_auth_middleware::GetLoginRoute;
+
     pub struct Auth {
         pub logout: &'static str,
         pub login: &'static str,

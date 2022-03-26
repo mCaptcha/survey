@@ -54,6 +54,6 @@ pub async fn bench(path: web::Path<String>) -> PageResult<impl Responder> {
         Err(_) => Err(PageError::PageDoesntExist),
         Ok(_) => Ok(HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
-            .body(&*BENCH)),
+            .body(&*BENCH.as_str())),
     }
 }
