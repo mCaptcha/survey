@@ -533,6 +533,18 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
+"@mcaptcha/core-glue@^0.1.0-alpha-3":
+  version "0.1.0-alpha-3"
+  resolved "https://registry.yarnpkg.com/@mcaptcha/core-glue/-/core-glue-0.1.0-alpha-3.tgz#16c11cb3751b6421999353dc10c032afd08ffa8b"
+  integrity sha512-avphBVgf3PPDWuUoDsB2qiXAss2pc00lUILswJaMQofr8FQyflzkhha8H2Z+qGFiX0Iib/yyP2TOtBDbHqE9Tg==
+
+"@mcaptcha/vanilla-glue@^0.1.0-alpha-1":
+  version "0.1.0-alpha-1"
+  resolved "https://registry.yarnpkg.com/@mcaptcha/vanilla-glue/-/vanilla-glue-0.1.0-alpha-1.tgz#6ddef419280853c55611d30fd44f4a31e7aab65f"
+  integrity sha512-GHPjUpqdgk9DquGnGYGDQertcwMENKUc4yr/Q3M7WzL6rPBs6JMCVdDHV22RGTxk3xBM19fGuDQ8GOyNauQ3hg==
+  dependencies:
+    "@mcaptcha/core-glue" "^0.1.0-alpha-3"
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -3435,11 +3447,6 @@ makeerror@1.0.x:
 
 mcaptcha-browser@./vendor/pow/:
   version "0.1.0"
-
-mcaptcha-glue@^0.1.0-alpha-3:
-  version "0.1.0-alpha-3"
-  resolved "https://registry.yarnpkg.com/mcaptcha-glue/-/mcaptcha-glue-0.1.0-alpha-3.tgz#0c1c5cfc6991de6571fb2c0f0950acac289e1141"
-  integrity sha512-C/Nfw4RGsmbozbyvxx/p0C7bUBn+YmP7tTl/8ORNdQiuy2VQUmD874LvbocnmSar8Isk/8rIaCqmVRBlRw/Yaw==
 
 media-typer@0.3.0:
   version "0.3.0"

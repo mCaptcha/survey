@@ -32,7 +32,7 @@
     "webpack-dev-server": "^4.3.1"
   },
   "dependencies": {
-    "mcaptcha-browser": "./vendor/pow/",
-    "mcaptcha-glue": "^0.1.0-alpha-3"
+    "@mcaptcha/vanilla-glue": "^0.1.0-alpha-1",
+    "mcaptcha-browser": "./vendor/pow/"
   }
 }

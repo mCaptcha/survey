@@ -15,6 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as glue from "mcaptcha-glue";
+import Widget, { WidgetConfig } from "@mcaptcha/vanilla-glue";
 
-glue.init();
+const config: WidgetConfig = {
+  widgetLink: new URL(
+    "https://demo.mcaptcha.org/widget/?sitekey=pHy0AktWyOKuxZDzFfoaewncWecCHo23"
+  ),
+};
+
+new Widget(config);
