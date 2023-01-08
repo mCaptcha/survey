@@ -7,9 +7,8 @@
 </p>
 
 [![Docker](https://img.shields.io/docker/pulls/mcaptcha/survey)](https://hub.docker.com/r/mcaptcha/survey)
-[![Build](https://github.com/mCaptcha/survey/actions/workflows/linux.yml/badge.svg)](https://github.com/mCaptcha/survey/actions/workflows/linux.yml)
-[![dependency status](https://deps.rs/repo/github/mCaptcha/survey/status.svg)](https://deps.rs/repo/github/mCaptcha/survey)
-[![codecov](https://codecov.io/gh/mCaptcha/survey/branch/master/graph/badge.svg)](https://codecov.io/gh/mCaptcha/survey)
+[![status-badge](https://ci.batsense.net/api/badges/mCaptcha/survey/status.svg)](https://ci.batsense.net/mCaptcha/survey)
+
 
 </div>
 
