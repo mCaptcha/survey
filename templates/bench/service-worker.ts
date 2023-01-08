@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { gen_pow } from "mcaptcha-browser";
+import { gen_pow } from "@mcaptcha/pow-wasm";
 import { Bench } from "./types";
 
 type PoWConfig = {
