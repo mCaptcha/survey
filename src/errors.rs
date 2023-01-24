@@ -76,6 +76,9 @@ pub enum ServiceError {
     PasswordTooLong,
     #[display(fmt = "Passwords don't match")]
     PasswordsDontMatch,
+
+    #[display(fmt = "Campaign doesn't exist")]
+    CampaignDoesntExist,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -118,6 +121,8 @@ impl ResponseError for ServiceError {
             ServiceError::PasswordTooShort => StatusCode::BAD_REQUEST,
             ServiceError::PasswordTooLong => StatusCode::BAD_REQUEST,
             ServiceError::PasswordsDontMatch => StatusCode::BAD_REQUEST,
+
+            ServiceError::CampaignDoesntExist => StatusCode::NOT_FOUND,
         }
     }
 }
