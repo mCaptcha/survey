@@ -1,24 +1,23 @@
 <footer class="footer">
-  <. use crate::PAGES; .>
   <ul class="footer__section">
     <li class="footer__item">
-      <a class="footer__link" href="<.= PAGES.about .>">About</a>
+      <a class="footer__link" href="{{ footer.about }}">About</a>
     </li>
     <li class="footer__item">
-      <a class="footer__link" href="<.= PAGES.donate .>">Donate</a>
+      <a class="footer__link" href="{{ footer.donate }}">Donate</a>
     </li>
     <li class="footer__item">
-      <a class="footer__link" href="<.= PAGES.privacy .>">Privacy</a>
+      <a class="footer__link" href="{{ footer.privacy }}">Privacy</a>
     </li>
     <li class="footer__item">
-      <a class="footer__link" href="<.= PAGES.security .>">Security</a>
+      <a class="footer__link" href="{{ footer.security }}">Security</a>
     </li>
     <li class="footer__item">
-      <a class="footer__link" href="<.= PAGES.thanks .>">Thanks</a>
+      <a class="footer__link" href="{{ footer.thanks }}">Thanks</a>
     </li>
     <li class="footer__item">
-      <a class="footer__link" href="<.= &*crate::SOURCE_FILES_OF_INSTANCE .>">
-        v<.= crate::VERSION .>-<.= crate::GIT_COMMIT_HASH[0..8] .>
+      <a class="footer__link" href="{{ footer.source_code }}">
+        v{{ footer.version }}-{{ footer.git_hash }}
     </li>
   </ul>
 </footer>
