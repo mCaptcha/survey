@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Aravinth Manivannan <realaravinth@batsense.net>
+ * Copyright (C) 2023  Aravinth Manivannan <realaravinth@batsense.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -14,21 +14,31 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use actix_web::*;
+
+pub use super::{context, Footer, TemplateFile, PAGES, PAYLOAD_KEY, TEMPLATES};
+
+pub fn register_templates(t: &mut tera::Tera) {
+    for template in [login::LOGIN, join::REGISTER].iter() {
+        template.register(t).expect(template.name);
+    }
+}
+
 pub mod join;
 pub mod login;
-pub mod sudo;
+//pub mod sudo;
 
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
-    cfg.service(login::login);
-    cfg.service(login::login_submit);
-    cfg.service(join::join);
-    cfg.service(join::join_submit);
+    login::services(cfg);
+    join::services(cfg);
 }
 
 pub mod routes {
     use actix_auth_middleware::GetLoginRoute;
+    use serde::{Deserialize, Serialize};
     use url::Url;
 
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Auth {
         pub login: &'static str,
         pub join: &'static str,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Aravinth Manivannan <realaravinth@batsense.net>
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -14,76 +14,81 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-use actix_web::HttpResponseBuilder;
-use actix_web::{error::ResponseError, http::header, web, HttpResponse, Responder};
-use lazy_static::lazy_static;
-use sailfish::TemplateOnce;
+use actix_web::http::header::ContentType;
+use std::cell::RefCell;
+use tera::Context;
+
+use crate::pages::errors::*;
+use crate::settings::Settings;
+
+use actix_web::{http::header, web, HttpResponse, Responder};
 
 use crate::api::v1::admin::auth::runners;
-use crate::errors::*;
-use crate::pages::errors::ErrorPage;
 use crate::AppData;
 use crate::PAGES;
 
-#[derive(Clone, TemplateOnce)]
-#[template(path = "auth/join/index.html")]
-struct IndexPage<'a> {
-    error: Option<ErrorPage<'a>>,
+pub use super::*;
+
+pub const REGISTER: TemplateFile = TemplateFile::new("register", "auth/join/index.html");
+
+pub struct Register {
+    ctx: RefCell<Context>,
 }
 
-const PAGE: &str = "Join";
-
-impl<'a> Default for IndexPage<'a> {
-    fn default() -> Self {
-        IndexPage { error: None }
+impl CtxError for Register {
+    fn with_error(&self, e: &ReadableError) -> String {
+        self.ctx.borrow_mut().insert(ERROR_KEY, e);
+        self.render()
     }
 }
 
-impl<'a> IndexPage<'a> {
-    pub fn new(title: &'a str, message: &'a str) -> Self {
-        Self {
-            error: Some(ErrorPage::new(title, message)),
-        }
+impl Register {
+    fn new(settings: &Settings) -> Self {
+        let ctx = RefCell::new(context(settings, "Join"));
+        Self { ctx }
+    }
+
+    pub fn render(&self) -> String {
+        TEMPLATES.render(REGISTER.name, &self.ctx.borrow()).unwrap()
+    }
+
+    pub fn page(s: &Settings) -> String {
+        let p = Self::new(s);
+        p.render()
     }
 }
 
-lazy_static! {
-    static ref INDEX: String = IndexPage::default().render_once().unwrap();
+#[actix_web_codegen_const_routes::get(path = "PAGES.auth.join")]
+#[tracing::instrument(name = "Serve registration page", skip(ctx))]
+pub async fn get_join(ctx: AppData) -> impl Responder {
+    let login = Register::page(&ctx.settings);
+    let html = ContentType::html();
+    HttpResponse::Ok().content_type(html).body(login)
 }
 
-#[my_codegen::get(path = "crate::PAGES.auth.join")]
-pub async fn join() -> impl Responder {
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(&*INDEX.as_str())
+pub fn services(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_join);
+    cfg.service(join_submit);
 }
 
-#[my_codegen::post(path = "PAGES.auth.join")]
+#[actix_web_codegen_const_routes::post(path = "PAGES.auth.join")]
+#[tracing::instrument(name = "Process web UI registration", skip(data))]
 pub async fn join_submit(
     payload: web::Form<runners::Register>,
     data: AppData,
-) -> PageResult<impl Responder> {
+) -> PageResult<impl Responder, Register> {
     let mut payload = payload.into_inner();
     if payload.email.is_some() && payload.email.as_ref().unwrap().is_empty() {
         payload.email = None;
     }
 
-    match runners::register_runner(&payload, &data).await {
-        Ok(()) => Ok(HttpResponse::Found()
-            .insert_header((header::LOCATION, PAGES.auth.login))
-            .finish()),
-        Err(e) => {
-            let status = e.status_code();
-            let heading = status.canonical_reason().unwrap_or("Error");
-            Ok(HttpResponseBuilder::new(status)
-                .content_type("text/html; charset=utf-8")
-                .body(
-                    IndexPage::new(heading, &format!("{}", e))
-                        .render_once()
-                        .unwrap(),
-                ))
-        }
-    }
+    runners::register_runner(&payload, &data)
+        .await
+        .map_err(|e| PageError::new(Register::new(&data.settings), e))?;
+
+    Ok(HttpResponse::Found()
+        .insert_header((header::LOCATION, PAGES.auth.login))
+        .finish())
 }
 
 #[cfg(test)]
@@ -103,7 +108,8 @@ mod tests {
 
     #[actix_rt::test]
     async fn auth_join_form_works() {
-        let data = Data::new().await;
+        let settings = Settings::new().unwrap();
+        let data = Data::new(settings).await;
         const NAME: &str = "testuserformjoin";
         const NAME2: &str = "testuserformjoin2";
         const EMAIL: &str = "testuserformjoin@a.com";
