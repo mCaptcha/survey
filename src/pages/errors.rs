@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Aravinth Manivannan <realaravinth@batsense.net>
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -14,107 +14,93 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::fmt;
 
-use actix_web::{web, HttpResponse, Responder};
-use lazy_static::lazy_static;
-use sailfish::TemplateOnce;
+use actix_web::{
+    error::ResponseError,
+    http::{header::ContentType, StatusCode},
+    HttpResponse, HttpResponseBuilder,
+};
+use derive_more::Display;
+use derive_more::Error;
+use serde::*;
 
-use crate::errors::PageError;
+use super::TemplateFile;
+use crate::errors::ServiceError;
 
-#[derive(Clone, TemplateOnce)]
-#[template(path = "errors/index.html")]
-pub struct ErrorPage<'a> {
-    pub title: &'a str,
-    pub message: &'a str,
+pub const ERROR_KEY: &str = "error";
+
+pub const ERROR_TEMPLATE: TemplateFile =
+    TemplateFile::new("error_comp", "components/error/index.html");
+pub fn register_templates(t: &mut tera::Tera) {
+    ERROR_TEMPLATE.register(t).expect(ERROR_TEMPLATE.name);
 }
 
-const PAGE: &str = "Error";
+/// Render template with error context
+pub trait CtxError {
+    fn with_error(&self, e: &ReadableError) -> String;
+}
 
-impl<'a> ErrorPage<'a> {
-    pub fn new(title: &'a str, message: &'a str) -> Self {
-        ErrorPage { title, message }
+#[derive(Serialize, Debug, Display, Clone)]
+#[display(fmt = "title: {} reason: {}", title, reason)]
+pub struct ReadableError {
+    pub reason: String,
+    pub title: String,
+}
+
+impl ReadableError {
+    pub fn new(e: &ServiceError) -> Self {
+        let reason = format!("{}", e);
+        let title = format!("{}", e.status_code());
+
+        Self { reason, title }
     }
 }
 
-lazy_static! {
-    static ref INTERNAL_SERVER_ERROR_BODY: String = ErrorPage::new(
-        "Internal Server Error",
-        &format!("{}", PageError::InternalServerError),
-    )
-    .render_once()
-    .unwrap();
-    static ref UNKNOWN_ERROR_BODY: String = ErrorPage::new(
-        "Something went wrong",
-        &format!("{}", PageError::InternalServerError),
-    )
-    .render_once()
-    .unwrap();
+#[derive(Error, Display)]
+#[display(fmt = "{}", readable)]
+pub struct PageError<T> {
+    #[error(not(source))]
+    template: T,
+    readable: ReadableError,
+    #[error(not(source))]
+    error: ServiceError,
 }
 
-const ERROR_ROUTE: &str = "/error/{id}";
-
-#[my_codegen::get(path = "ERROR_ROUTE")]
-async fn error(path: web::Path<usize>) -> impl Responder {
-    let resp = match path.into_inner() {
-        500 => HttpResponse::InternalServerError()
-            .content_type("text/html; charset=utf-8")
-            .body(&*INTERNAL_SERVER_ERROR_BODY.as_str()),
-
-        _ => HttpResponse::InternalServerError()
-            .content_type("text/html; charset=utf-8")
-            .body(&*UNKNOWN_ERROR_BODY.as_str()),
-    };
-
-    resp
-}
-
-pub fn services(cfg: &mut web::ServiceConfig) {
-    cfg.service(error);
-}
-
-pub mod routes {
-    pub struct Errors {
-        pub internal_server_error: &'static str,
-        pub unknown_error: &'static str,
+impl<T> fmt::Debug for PageError<T> {
+    #[cfg(not(tarpaulin_include))]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PageError")
+            .field("readable", &self.readable)
+            .finish()
     }
+}
 
-    impl Errors {
-        pub const fn new() -> Self {
-            Errors {
-                internal_server_error: "/error/500",
-                unknown_error: "/error/007",
-            }
+impl<T: CtxError> PageError<T> {
+    /// create new instance of [PageError] from a template and an error
+    pub fn new(template: T, error: ServiceError) -> Self {
+        let readable = ReadableError::new(&error);
+        Self {
+            error,
+            template,
+            readable,
         }
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use actix_web::{http::StatusCode, test, App};
+#[cfg(not(tarpaulin_include))]
+impl<T: CtxError> ResponseError for PageError<T> {
+    fn error_response(&self) -> HttpResponse {
+        HttpResponseBuilder::new(self.status_code())
+            .content_type(ContentType::html())
+            .body(self.template.with_error(&self.readable))
+    }
 
-    use super::*;
-    use crate::PAGES;
-
-    #[actix_rt::test]
-    async fn error_pages_work() {
-        let app = test::init_service(App::new().configure(services)).await;
-
-        let resp = test::call_service(
-            &app,
-            test::TestRequest::get()
-                .uri(PAGES.errors.internal_server_error)
-                .to_request(),
-        )
-        .await;
-        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
-
-        let resp = test::call_service(
-            &app,
-            test::TestRequest::get()
-                .uri(PAGES.errors.unknown_error)
-                .to_request(),
-        )
-        .await;
-        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    fn status_code(&self) -> StatusCode {
+        self.error.status_code()
     }
 }
+
+/// Generic result data structure
+#[cfg(not(tarpaulin_include))]
+pub type PageResult<V, T> = std::result::Result<V, PageError<T>>;
