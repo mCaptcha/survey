@@ -23,3 +23,63 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(static_files::static_files);
     cfg.service(static_files::favicons);
 }
+
+pub mod routes {
+    use lazy_static::lazy_static;
+    use serde::*;
+
+    use super::static_files::assets::Img;
+    use crate::FILES;
+
+    lazy_static! {
+        pub static ref ASSETS: Assets = Assets::new();
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+    pub struct Svg {
+        pub trash: Img,
+    }
+
+    impl Svg {
+        /// create new instance of Routes
+        fn new() -> Svg {
+            let trash = Img {
+                path: FILES.get("./static/cache/img/trash.svg").unwrap(),
+                name: "Trash icon",
+            };
+
+            Svg { trash }
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+    /// Top-level routes data structure for V1 AP1
+    pub struct Assets {
+        /// Authentication routes
+        pub css: &'static str,
+        pub mobile_css: &'static str,
+        pub js: &'static str,
+        pub glue: &'static str,
+        pub logo: Img,
+        pub svg: Svg,
+    }
+
+    impl Assets {
+        /// create new instance of Routes
+        pub fn new() -> Assets {
+            let logo = Img {
+                path: FILES.get("./static/cache/img/icon-trans.png").unwrap(),
+                name: "mCaptcha logo",
+            };
+
+            Assets {
+                css: *crate::CSS,
+                mobile_css: *crate::MOBILE_CSS,
+                js: *crate::JS,
+                glue: *crate::GLUE,
+                svg: Svg::new(),
+                logo,
+            }
+        }
+    }
+}

@@ -25,32 +25,12 @@ use rust_embed::RustEmbed;
 use crate::CACHE_AGE;
 
 pub mod assets {
-    use lazy_static::lazy_static;
+    use serde::*;
 
-    use crate::FILES;
-
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct Img {
         pub path: &'static str,
         pub name: &'static str,
-    }
-
-    lazy_static! {
-        pub static ref LOGO: Img = Img {
-            path: FILES.get("./static/cache/img/icon-trans.png").unwrap(),
-            name: "mCaptcha logo"
-        };
-        pub static ref TRASH: Img = Img {
-            path: FILES.get("./static/cache/img/trash.svg").unwrap(),
-            name: "Trash logo"
-        };
-        pub static ref HEADSETS: Img = Img {
-            path: FILES.get("./static/cache/img/headsets.jpg").unwrap(),
-            name: "Headsets image"
-        };
-        pub static ref EXTERNAL_LINK: Img = Img {
-            path: FILES.get("./static/cache/img/external-link.svg").unwrap(),
-            name: "External Link"
-        };
     }
 }
 
@@ -121,19 +101,21 @@ mod tests {
     use actix_web::test;
 
     use super::*;
+    use crate::static_assets::routes::ASSETS;
+    use crate::tests::get_test_data;
     use crate::*;
 
     #[actix_rt::test]
     async fn static_assets_work() {
-        let app = get_app!().await;
+        let data = get_test_data().await;
+        let app = get_app!(data).await;
 
         for file in [
-            assets::LOGO.path,
-            assets::HEADSETS.path,
-            *crate::JS,
-            *crate::CSS,
-            *crate::MOBILE_CSS,
-            *crate::GLUE,
+            ASSETS.logo.path,
+            ASSETS.js,
+            ASSETS.css,
+            ASSETS.mobile_css,
+            ASSETS.glue,
         ]
         .iter()
         {
@@ -150,7 +132,8 @@ mod tests {
     async fn favicons_work() {
         assert!(Favicons::get("favicon.ico").is_some());
 
-        let app = get_app!().await;
+        let data = get_test_data().await;
+        let app = get_app!(data).await;
 
         let resp = test::call_service(
             &app,
