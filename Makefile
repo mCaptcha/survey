@@ -9,6 +9,9 @@ clean: ## Clean all build artifacts and dependencies
 	@-rm -rf ./static/cache/bundle
 	@-rm -rf ./assets
 
+check: ## Check for syntax errors on all workspaces
+	cargo check --workspace --tests --all-features
+
 coverage: migrate ## Generate HTML code coverage
 	cargo tarpaulin -t 1200 --out Html
 
