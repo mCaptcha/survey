@@ -1,85 +1,48 @@
-<. include!("./components/base/top.html"); .>
-<body class="survey__body">
-  <main class="survey__container">
-    <h1>mCaptcha benchmark survey</h1>
-    <section>
-      <h2>Why should I participate</h2>
-      <p>
-        <a href="https://mcaptcha.org" target="_blank">mCaptcha</a>
-        is a cutting edge, privacy respecting CAPTCHA system. We use a
-        <a href="https://en.wikipedia.org/wiki/Proof_of_work" target="_blank"
-          >proof of work</a
-        >
-        based mechanism to defend against
-        <a href="https://en.wikipedia.org/wiki/Proof_of_work" target="_blank"
-          >denial-of-service attacks</a
-        >
-        which allows for a non-interactive CAPTCHA experience. We require
-        performance metrics measured on a wide range of devices to fine-tune the
-        system for optimal user experience, see for yourself!
-      </p>
-      <div class="survey__captcha-widget" style="width: 304px; height: 78px">
-        <div id="mcaptcha__widget-container" style="width: 304px; height: 78px"></div>
-      </div>
-    </section>
-    <section>
-      <h2>What do I get?</h2>
-      <div class="survey__prize-section">
+{% extends 'base' %} 
+{% block body %}
+  <body class="survey__body">
+    <main class="survey__container">
+      <h1>mCaptcha benchmark survey</h1>
+      <section>
+        {% include "error_comp" %}
+        <h2>Why should I participate</h2>
         <p>
-          We are conducting a lucky draw. Two lucky participants, selected at
-          random, will win a pair of JBL headsets worth over ₹2,500! Also, you
-          will be helping us make the internet healthier :)
+          <a href="https://mcaptcha.org" target="_blank">mCaptcha</a>
+          is a cutting edge, privacy respecting CAPTCHA system. We use a
+          <a href="https://en.wikipedia.org/wiki/Proof_of_work" target="_blank"
+            >proof of work</a
+          >
+          based mechanism to defend against
+          <a href="https://en.wikipedia.org/wiki/Proof_of_work" target="_blank"
+            >denial-of-service attacks</a
+          >
+          which allows for a non-interactive CAPTCHA experience. We require
+          performance metrics measured on a wide range of devices to fine-tune the
+          system for optimal user experience, see for yourself!
         </p>
-        <a
-          target="_blank"
-          class="prize__preview"
-          href="https://www.amazon.in/JBL-Detachable-Directional-Headphones-Conference/dp/B0948TG7H8"
-        >
-          <img
-            src="<.= crate::assets::HEADSETS.path .>"
-            alt="<.= crate::assets::HEADSETS.name .>"
-            class="survey__prize"
-          />
-          <p>
-            Product details
-            <img
-              src="<.= crate::assets::EXTERNAL_LINK.path .>"
-              alt="<.= crate::assets::EXTERNAL_LINK.name .>"
-            />
-          </p>
-        </a>
-      </div>
-    </section>
+        <div class="survey__captcha-widget" style="width: 304px; height: 78px">
+          <div id="mcaptcha__widget-container" style="width: 304px; height: 78px"></div>
+        </div>
+      </section>
 
-    <section>
-      <h2>Privacy policy</h2>
-      <p>This survey collects the following information:</p>
-      <ul>
-        <li>Device name</li>
-        <li>Operating system</li>
-        <li>Processor information</li>
-        <li>Benchmark results</li>
-      </ul>
-      <b>No Personally identifying information is collected</b>
-    </section>
+      <section>
+        <h2>Privacy policy</h2>
+        <p>This survey collects the following information:</p>
+        <ul>
+          <li>Device name</li>
+          <li>Operating system</li>
+          <li>Processor information</li>
+          <li>Benchmark results</li>
+        </ul>
+        <b>No Personally identifying information is collected</b>
+      </section>
 
-    <section>
-      <h2>Winner Announcement</h2>
-      <p>
-        The winners will be announed on the organisation website
-        <a href="https://mcaptcha.org/blog/survey" target="_blank">here</a> on
-        December 1, 2021. The winning submission IDs will be published and the
-        winners expected to provide the submission proof to claim their rewards.
-      </p>
-    </section>
-
-    <a
-      class="link__btn"
-      href="<.= crate::PAGES.panel.campaigns.get_bench_route(uuid) .>"
-      >Get started</a
-    >
-  </main>
-  <. include!("./components/footer/index.html"); .>
-</body>
-<script src="<.= &*crate::GLUE .>./dist/bundle.js"></script>
-<. include!("./components/base/bottom.html"); .>
+      <a
+        class="link__btn"
+        href="{{ payload }}"
+        >Get started</a
+      >
+    </main>
+  </body>
+  <script src="{{ assets.glue }}"></script>
+{% endblock body %}

@@ -14,41 +14,68 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::cell::RefCell;
 use std::str::FromStr;
 
+use actix_web::http::header::ContentType;
 use actix_web::{web, HttpResponse, Responder};
-use my_codegen::get;
-use sailfish::TemplateOnce;
+use tera::Context;
 use uuid::Uuid;
 
-use crate::errors::*;
-use crate::PAGES;
+use crate::errors::ServiceError;
+use crate::settings::Settings;
+use crate::AppData;
 
-#[derive(TemplateOnce)]
-#[template(path = "index.html")]
-struct Intro<'a> {
-    uuid: &'a str,
+pub use super::*;
+
+pub struct Intro {
+    ctx: RefCell<Context>,
 }
 
-const PAGE: &str = "Survey";
+pub const INTRO: TemplateFile = TemplateFile::new("intro", "index.html");
 
-impl<'a> Intro<'a> {
-    pub fn new(uuid: &'a str) -> Self {
-        Self { uuid }
+impl CtxError for Intro {
+    fn with_error(&self, e: &ReadableError) -> String {
+        self.ctx.borrow_mut().insert(ERROR_KEY, e);
+        self.render()
     }
 }
 
-#[get(path = "PAGES.panel.campaigns.about")]
-pub async fn about(path: web::Path<String>) -> PageResult<impl Responder> {
+impl Intro {
+    pub fn new(settings: &Settings, payload: Option<&str>) -> Self {
+        let ctx = RefCell::new(context(settings, "Login"));
+        if let Some(uuid) = payload {
+            let payload = crate::PAGES.panel.campaigns.get_bench_route(uuid);
+            ctx.borrow_mut().insert(PAYLOAD_KEY, &payload);
+        }
+        Self { ctx }
+    }
+
+    pub fn render(&self) -> String {
+        TEMPLATES.render(INTRO.name, &self.ctx.borrow()).unwrap()
+    }
+}
+
+#[actix_web_codegen_const_routes::get(path = "PAGES.panel.campaigns.about")]
+pub async fn about(
+    data: AppData,
+    path: web::Path<String>,
+) -> PageResult<impl Responder, Intro> {
     let path = path.into_inner();
 
     match Uuid::from_str(&path) {
-        Err(_) => Err(PageError::PageDoesntExist),
+        Err(_) => Err(PageError::new(
+            Intro::new(&data.settings, None),
+            ServiceError::CampaignDoesntExist,
+        )),
         Ok(_) => {
-            let page = Intro::new(&path).render_once().unwrap();
-            Ok(HttpResponse::Ok()
-                .content_type("text/html; charset=utf-8")
-                .body(page))
+            let about = Intro::new(&data.settings, Some(&path)).render();
+            let html = ContentType::html();
+            Ok(HttpResponse::Ok().content_type(html).body(about))
         }
     }
+}
+
+pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
+    cfg.service(about);
 }
