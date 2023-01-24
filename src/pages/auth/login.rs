@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021  Aravinth Manivannan <realaravinth@batsense.net>
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -14,90 +14,87 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::cell::RefCell;
+
 use actix_identity::Identity;
-use actix_web::HttpResponseBuilder;
-use actix_web::{error::ResponseError, http::header, web, HttpResponse, Responder};
-use lazy_static::lazy_static;
-use my_codegen::{get, post};
-use sailfish::TemplateOnce;
+use actix_web::http::header::{self, ContentType};
+use tera::Context;
 
 use crate::api::v1::admin::auth::runners;
 use crate::api::v1::RedirectQuery;
-use crate::errors::*;
-use crate::pages::errors::ErrorPage;
+use crate::pages::errors::*;
+use crate::settings::Settings;
 use crate::AppData;
-use crate::PAGES;
 
-#[derive(Clone, TemplateOnce)]
-#[template(path = "auth/login/index.html")]
-struct IndexPage<'a> {
-    error: Option<ErrorPage<'a>>,
+pub use super::*;
+
+pub struct Login {
+    ctx: RefCell<Context>,
 }
 
-const PAGE: &str = "Login";
+pub const LOGIN: TemplateFile = TemplateFile::new("login", "auth/login/index.html");
 
-impl<'a> Default for IndexPage<'a> {
-    fn default() -> Self {
-        IndexPage { error: None }
+impl CtxError for Login {
+    fn with_error(&self, e: &ReadableError) -> String {
+        self.ctx.borrow_mut().insert(ERROR_KEY, e);
+        self.render()
     }
 }
 
-impl<'a> IndexPage<'a> {
-    pub fn new(title: &'a str, message: &'a str) -> Self {
-        Self {
-            error: Some(ErrorPage::new(title, message)),
-        }
+impl Login {
+    pub fn new(settings: &Settings) -> Self {
+        let ctx = RefCell::new(context(settings, "Login"));
+        Self { ctx }
+    }
+
+    pub fn render(&self) -> String {
+        TEMPLATES.render(LOGIN.name, &self.ctx.borrow()).unwrap()
+    }
+
+    pub fn page(s: &Settings) -> String {
+        let p = Self::new(s);
+        p.render()
     }
 }
 
-lazy_static! {
-    static ref INDEX: String = IndexPage::default().render_once().unwrap();
+#[actix_web_codegen_const_routes::get(path = "PAGES.auth.login")]
+#[tracing::instrument(name = "Serve login page", skip(ctx))]
+pub async fn get_login(ctx: AppData) -> impl Responder {
+    let login = Login::page(&ctx.settings);
+    let html = ContentType::html();
+    HttpResponse::Ok().content_type(html).body(login)
 }
 
-#[get(path = "PAGES.auth.login")]
-pub async fn login() -> impl Responder {
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(&*INDEX.as_str())
+pub fn services(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_login);
+    cfg.service(login_submit);
 }
 
-#[post(path = "PAGES.auth.login")]
+#[actix_web_codegen_const_routes::post(path = "PAGES.auth.login")]
+#[tracing::instrument(name = "Web UI Login", skip(id, payload, data, path))]
 pub async fn login_submit(
     id: Identity,
     payload: web::Form<runners::Login>,
     data: AppData,
     path: web::Path<RedirectQuery>,
-) -> PageResult<impl Responder> {
+) -> PageResult<impl Responder, Login> {
     let payload = payload.into_inner();
-    match runners::login_runner(&payload, &data).await {
-        Ok(username) => {
-            id.remember(username);
-            let path = path.into_inner();
-            if let Some(redirect_to) = path.redirect_to {
-                Ok(HttpResponse::Found()
-                    .insert_header((header::LOCATION, redirect_to))
-                    .finish())
-            } else {
-                Ok(HttpResponse::Found()
-                    .insert_header((header::LOCATION, PAGES.home))
-                    .finish())
-            }
-        }
-        Err(e) => {
-            let status = e.status_code();
-            let heading = status.canonical_reason().unwrap_or("Error");
+    let username = runners::login_runner(&payload, &data)
+        .await
+        .map_err(|e| PageError::new(Login::new(&data.settings), e))?;
 
-            Ok(HttpResponseBuilder::new(status)
-                .content_type("text/html; charset=utf-8")
-                .body(
-                    IndexPage::new(heading, &format!("{}", e))
-                        .render_once()
-                        .unwrap(),
-                ))
-        }
+    id.remember(username);
+    let path = path.into_inner();
+    if let Some(redirect_to) = path.redirect_to {
+        Ok(HttpResponse::Found()
+            .insert_header((header::LOCATION, redirect_to))
+            .finish())
+    } else {
+        Ok(HttpResponse::Found()
+            .insert_header((header::LOCATION, PAGES.home))
+            .finish())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use actix_web::test;
@@ -105,14 +102,13 @@ mod tests {
     use super::*;
 
     use crate::api::v1::admin::auth::runners::{Login, Register};
-    use crate::data::Data;
     use crate::tests::*;
     use crate::*;
     use actix_web::http::StatusCode;
 
     #[actix_rt::test]
     async fn auth_form_works() {
-        let data = Data::new().await;
+        let data = get_test_data().await;
         const NAME: &str = "testuserform";
         const PASSWORD: &str = "longpassword";
 
