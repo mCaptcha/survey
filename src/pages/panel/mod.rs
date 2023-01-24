@@ -14,16 +14,24 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 use actix_web::{http, HttpResponse, Responder};
-use lazy_static::lazy_static;
-use my_codegen::get;
 
-use crate::PAGES;
+pub use super::{context, Footer, TemplateFile, PAGES, PAYLOAD_KEY, TEMPLATES};
+use crate::AppData;
 
 mod campaigns;
 
+pub fn register_templates(t: &mut tera::Tera) {
+    campaigns::register_templates(t);
+    //    for template in [REGISTER].iter() {
+    //        template.register(t).expect(template.name);
+    //    }
+}
+
 pub mod routes {
     use super::campaigns::routes::Campaigns;
+    use serde::{Deserialize, Serialize};
 
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Panel {
         pub home: &'static str,
         pub campaigns: Campaigns,
@@ -49,18 +57,14 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     campaigns::services(cfg);
 }
 
-lazy_static! {
-    pub static ref DEFAULT_CAMPAIGN_ABOUT: String = PAGES
+#[actix_web_codegen_const_routes::get(path = "PAGES.panel.home")]
+pub async fn home(ctx: AppData) -> impl Responder {
+    let loc = PAGES
         .panel
         .campaigns
-        .get_about_route(&*crate::SETTINGS.default_campaign);
-}
+        .get_about_route(&ctx.settings.default_campaign);
 
-#[get(path = "PAGES.panel.home")]
-pub async fn home() -> impl Responder {
-    let loc: &str = &*DEFAULT_CAMPAIGN_ABOUT;
     HttpResponse::Found()
-        //.insert_header((http::header::LOCATION, PAGES.panel.campaigns.home))
         .insert_header((http::header::LOCATION, loc))
         .finish()
 }
