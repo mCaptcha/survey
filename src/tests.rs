@@ -40,6 +40,12 @@ use crate::data::Data;
 use crate::errors::*;
 use crate::V1_API_ROUTES;
 
+pub async fn get_test_data() -> Arc<Data> {
+    let mut settings = Settings::new().unwrap();
+    settings.allow_registration = true;
+    Data::new(settings).await
+}
+
 #[macro_export]
 macro_rules! get_cookie {
     ($resp:expr) => {
@@ -89,24 +95,44 @@ macro_rules! get_works {
 }
 
 #[macro_export]
+macro_rules! get_request {
+    ($app:expr,$route:expr ) => {
+        test::call_service(&$app, test::TestRequest::get().uri($route).to_request())
+            .await
+    };
+
+    ($app:expr, $route:expr, $cookies:expr) => {
+        test::call_service(
+            &$app,
+            test::TestRequest::get()
+                .uri($route)
+                .cookie($cookies)
+                .to_request(),
+        )
+        .await
+    };
+}
+
+#[macro_export]
 macro_rules! get_app {
-    ("APP") => {
+    ("APP", $settings:expr) => {
         actix_web::App::new()
-            .app_data(crate::get_json_err())
-            .wrap(crate::get_identity_service())
-            .wrap(crate::get_survey_session())
+            .app_data($crate::get_json_err())
+            .wrap($crate::get_identity_service(&$settings))
+            .wrap($crate::get_survey_session(&$settings))
             .wrap(actix_web::middleware::NormalizePath::new(
                 actix_web::middleware::TrailingSlash::Trim,
             ))
-            .configure(crate::services)
+            .configure($crate::services)
     };
 
-    () => {
-        test::init_service(get_app!("APP"))
-    };
+    //    ($settings:expr) => {
+    //        test::init_service(get_app!("APP"))
+    //    };
     ($data:expr) => {
         actix_web::test::init_service(
-            get_app!("APP").app_data(actix_web::web::Data::new($data.clone())),
+            get_app!("APP", $data.settings)
+                .app_data(actix_web::web::Data::new($data.clone())),
         )
     };
 }
@@ -123,7 +149,7 @@ pub async fn register_and_signin(
 
 /// register utility
 pub async fn register(name: &str, email: &str, password: &str) {
-    let data = Data::new().await;
+    let data = get_test_data().await;
     let app = get_app!(data).await;
 
     // 1. Register
@@ -138,7 +164,12 @@ pub async fn register(name: &str, email: &str, password: &str) {
         post_request!(&msg, V1_API_ROUTES.admin.auth.register).to_request(),
     )
     .await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    if resp.status() != StatusCode::OK {
+        let resp_err: ErrorToResponse = test::read_body_json(resp).await;
+        panic!("{}", resp_err.error);
+    } else {
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
 }
 
 /// signin util
@@ -146,7 +177,7 @@ pub async fn signin(
     name: &str,
     password: &str,
 ) -> (Arc<Data>, Login, ServiceResponse<EitherBody<BoxBody>>) {
-    let data = Data::new().await;
+    let data = get_test_data().await;
     let app = get_app!(data.clone()).await;
 
     // 2. signin
