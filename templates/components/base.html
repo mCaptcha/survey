@@ -3,13 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><.= PAGE .> | <.= crate::pages::NAME .></title>
-    <link rel="stylesheet" href="<.= &*crate::CSS .>" />
+
+	{% set title = page_title ~ " | " ~ "mCaptcha Survey" %}
+	<title> {{ title }} </title>
+    <meta
+      name="twitter:title"
+	  content="{{ title }}"
+    />
+    <meta
+      property="og:title"
+	  content="{{ title }}"
+    />
+
+    <link rel="stylesheet" href="{{ assets.css }}" />
     <link
       rel="stylesheet"
       media="screen and (max-width: 1250px)"
       type="text/css"
-      href="<.= &*crate::MOBILE_CSS .>"
+      href="{{ assets.mobile_css }}"
     />
 
     <meta name="referrer" content="no-referrer-when-downgrade" />
@@ -23,24 +34,18 @@
     <meta name="author" content="Aravinth Manivannan" />
     <meta name="twitter:card" value="summary_large_image" />
     <meta name="twitter:site" content="@realaravinth" />
-    <meta
-      name="twitter:title"
-      content="<.= PAGE .> | <.= crate::pages::NAME .>"
-    />
+
     <meta
       name="twitter:description"
       content="mCaptcha is an AGPL'd, privacy focued, proof-of-work based CAPTCHA System"
     />
     <meta name="twitter:creator" content="@realaravinth" />
-    <meta property="twitter:image" content="<.= crate::assets::LOGO.path .>" />
+    <meta property="twitter:image" content="{{ assets.logo.path }}" />
 
-    <meta
-      property="og:title"
-      content="<.= PAGE .> | <.= crate::pages::NAME .>"
-    />
+
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://mcaptcaha.org" />
-    <meta property="og:image" content="<.= crate::assets::LOGO.path .>" />
+    <meta property="og:image" content="{{ assets.logo.path }}" />
 
     <meta
       property="og:description"
@@ -51,3 +56,10 @@
       content="mCaptcha is an AGPL'd, privacy focued, proof-of-work based CAPTCHA System"
     />
   </head>
+
+<header>{% block nav %} {% endblock nav %}</header>
+{% block body %} {% endblock body %}
+{% include "footer" %}
+
+<script src="{{ assets.js }}"></script>
+</html>
