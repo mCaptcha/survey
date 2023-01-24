@@ -38,40 +38,22 @@ mod tests;
 
 pub use crate::data::Data;
 pub use api::v1::ROUTES as V1_API_ROUTES;
-pub use pages::routes::ROUTES as PAGES;
+pub use pages::routes::PAGES;
 pub use settings::Settings;
 pub use static_assets::static_files::assets;
 
 use static_assets::FileMap;
 
 lazy_static! {
-    pub static ref SETTINGS: Settings = Settings::new().unwrap();
     pub static ref FILES: FileMap = FileMap::new();
-
     pub static ref CSS: &'static str =
         FILES.get("./static/cache/bundle/css/main.css").unwrap();
-
     pub static ref MOBILE_CSS: &'static str =
         FILES.get("./static/cache/bundle/css/mobile.css").unwrap();
-
-
     pub static ref JS: &'static str =
         FILES.get("./static/cache/bundle/bundle.js").unwrap();
-
     pub static ref GLUE: &'static str =
         FILES.get("./static/cache/bundle/glue.js").unwrap();
-
-    /// points to source files matching build commit
-    pub static ref SOURCE_FILES_OF_INSTANCE: String = {
-        let mut url = SETTINGS.source_code.clone();
-        if !url.ends_with('/') {
-            url.push('/');
-        }
-        let mut  base = url::Url::parse(&url).unwrap();
-        base =  base.join("tree/").unwrap();
-        base =  base.join(GIT_COMMIT_HASH).unwrap();
-        base.into()
-    };
 }
 
 pub const CACHE_AGE: u32 = 604800;
@@ -97,11 +79,13 @@ async fn main() -> std::io::Result<()> {
         PKG_NAME, PKG_DESCRIPTION, PKG_HOMEPAGE, VERSION, GIT_COMMIT_HASH
     );
 
-    let data = Data::new().await;
+    let settings = Settings::new().unwrap();
+    let data = Data::new(settings.clone()).await;
     sqlx::migrate!("./migrations/").run(&data.db).await.unwrap();
     let data = actix_web::web::Data::new(data);
 
-    println!("Starting server on: http://{}", SETTINGS.server.get_ip());
+    let ip = settings.server.get_ip();
+    println!("Starting server on: http://{}", ip);
 
     HttpServer::new(move || {
         App::new()
@@ -110,17 +94,17 @@ async fn main() -> std::io::Result<()> {
             .app_data(get_json_err())
             .wrap(
                 actix_middleware::DefaultHeaders::new()
-                    .header("Permissions-Policy", "interest-cohort=()"),
+                    .add(("Permissions-Policy", "interest-cohort=()")),
             )
-            .wrap(get_survey_session())
-            .wrap(get_identity_service())
+            .wrap(get_survey_session(&settings))
+            .wrap(get_identity_service(&settings))
             .wrap(actix_middleware::NormalizePath::new(
                 actix_middleware::TrailingSlash::Trim,
             ))
             .configure(services)
             .app_data(data.clone())
     })
-    .bind(SETTINGS.server.get_ip())
+    .bind(ip)
     .unwrap()
     .run()
     .await
@@ -135,12 +119,14 @@ pub fn get_json_err() -> JsonConfig {
 }
 
 #[cfg(not(tarpaulin_include))]
-pub fn get_survey_session() -> actix_session::SessionMiddleware<CookieSessionStore> {
+pub fn get_survey_session(
+    settings: &Settings,
+) -> actix_session::SessionMiddleware<CookieSessionStore> {
     use actix_web::cookie::Key;
-    let cookie_secret = &SETTINGS.server.cookie_secret2;
+    let cookie_secret = &settings.server.cookie_secret2;
     let key = Key::from(cookie_secret.as_bytes());
     SessionMiddleware::builder(CookieSessionStore::default(), key)
-        .cookie_domain(Some(SETTINGS.server.domain.clone()))
+        .cookie_domain(Some(settings.server.domain.clone()))
         .cookie_name("survey-id".into())
         .cookie_path("/".to_string())
         .cookie_secure(false)
@@ -149,14 +135,16 @@ pub fn get_survey_session() -> actix_session::SessionMiddleware<CookieSessionSto
 }
 
 #[cfg(not(tarpaulin_include))]
-pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
-    let cookie_secret = &SETTINGS.server.cookie_secret;
+pub fn get_identity_service(
+    settings: &Settings,
+) -> IdentityService<CookieIdentityPolicy> {
+    let cookie_secret = &settings.server.cookie_secret;
     IdentityService::new(
         CookieIdentityPolicy::new(cookie_secret.as_bytes())
             .path("/admin/")
             .name("survey-admin-auth")
             .max_age_secs(60 * 60 * 24 * 365)
-            .domain(&SETTINGS.server.domain)
+            .domain(&settings.server.domain)
             .secure(false),
     )
 }
