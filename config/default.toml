@@ -2,6 +2,7 @@ debug = true
 allow_registration = true
 source_code = "https://github.com/mcaptcha/survey"
 default_campaign = "b6b261fa-3ef9-4d7f-8852-339b8f81bb01"
+support_email="support@example.org"
 
 [server]
 # Please set a unique value, your kaizen instance's security depends on this being 
@@ -32,3 +33,10 @@ username = "postgres"
 password = "password"
 name = "postgres"
 pool = 4
+
+[footer]
+about = "https://mcapthca.org/about"
+donate = "https://mcapthca.org/donate"
+thanks = "https://mcapthca.org/thanks"
+privacy = "https://mcapthca.org/privacy"
+security = "https://mcapthca.org/security"

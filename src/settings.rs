@@ -20,10 +20,11 @@ use std::path::Path;
 use config::{Config, ConfigError, Environment, File};
 use log::{debug, warn};
 use serde::Deserialize;
+use serde::Serialize;
 use url::Url;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Server {
     pub port: u32,
     pub domain: String,
@@ -40,7 +41,7 @@ impl Server {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct DatabaseBuilder {
     pub port: u32,
     pub hostname: String,
@@ -68,20 +69,31 @@ impl DatabaseBuilder {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Database {
     pub url: String,
     pub pool: u32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Footer {
+    pub about: Url,
+    pub privacy: Url,
+    pub security: Url,
+    pub donate: Url,
+    pub thanks: Url,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub debug: bool,
     pub allow_registration: bool,
     pub database: Database,
     pub server: Server,
     pub source_code: String,
+    pub support_email: String,
     pub default_campaign: String,
+    pub footer: Footer,
 }
 
 #[cfg(not(tarpaulin_include))]
