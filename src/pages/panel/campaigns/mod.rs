@@ -13,23 +13,47 @@
  *
  * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::cell::RefCell;
+
 use actix_identity::Identity;
+use actix_web::http::header::ContentType;
 use actix_web::{HttpResponse, Responder};
-use my_codegen::get;
-use sailfish::TemplateOnce;
+use serde::{Deserialize, Serialize};
+use tera::Context;
 
 use crate::api::v1::admin::campaigns::{
     runners::list_campaign_runner, ListCampaignResp,
 };
+use crate::pages::errors::*;
 use crate::AppData;
-use crate::PAGES;
+use crate::Settings;
 
 pub mod about;
 pub mod bench;
 pub mod delete;
 pub mod new;
 
+pub use super::{context, Footer, TemplateFile, PAGES, PAYLOAD_KEY, TEMPLATES};
+
+pub fn register_templates(t: &mut tera::Tera) {
+    for template in [
+        CAMPAIGNS,
+        about::INTRO,
+        new::NEW_CAMPAIGN,
+        new::NEW_CAMPAIGN_FORM,
+        bench::BENCH,
+        delete::SUDO_DELETE,
+    ]
+    .iter()
+    {
+        template.register(t).expect(template.name);
+    }
+}
+
 pub mod routes {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Campaigns {
         pub home: &'static str,
         pub new: &'static str,
@@ -69,40 +93,86 @@ pub mod routes {
 
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(home);
-    cfg.service(new::new_campaign);
-    cfg.service(new::new_campaign_submit);
-    cfg.service(about::about);
-    cfg.service(bench::bench);
-    cfg.service(delete::delete_campaign);
-    cfg.service(delete::delete_campaign_submit);
+    about::services(cfg);
+    new::services(cfg);
+    bench::services(cfg);
+    delete::services(cfg);
 }
 
-#[derive(TemplateOnce)]
-#[template(path = "panel/campaigns/index.html")]
-struct HomePage {
-    data: Vec<ListCampaignResp>,
+pub use super::*;
+
+pub struct Campaigns {
+    ctx: RefCell<Context>,
 }
 
-impl HomePage {
-    fn new(data: Vec<ListCampaignResp>) -> Self {
-        Self { data }
+pub const CAMPAIGNS: TemplateFile =
+    TemplateFile::new("campaigns", "panel/campaigns/index.html");
+
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+pub struct TemplateCampaign {
+    pub name: String,
+    pub uuid: String,
+    pub route: String,
+}
+
+impl From<ListCampaignResp> for TemplateCampaign {
+    fn from(c: ListCampaignResp) -> Self {
+        let route = crate::PAGES.panel.campaigns.get_about_route(&c.uuid);
+        let uuid = c.uuid;
+        let name = c.name;
+        Self { route, name, uuid }
     }
 }
 
-const PAGE: &str = "Campaigns";
+impl CtxError for Campaigns {
+    fn with_error(&self, e: &ReadableError) -> String {
+        self.ctx.borrow_mut().insert(ERROR_KEY, e);
 
-#[get(
+        self.render()
+    }
+}
+
+impl Campaigns {
+    pub fn new(settings: &Settings, payload: Option<Vec<TemplateCampaign>>) -> Self {
+        let ctx = RefCell::new(context(settings, "Campaigns"));
+        if let Some(payload) = payload {
+            if !payload.is_empty() {
+                ctx.borrow_mut().insert(PAYLOAD_KEY, &payload);
+            }
+        }
+        Self { ctx }
+    }
+
+    pub fn render(&self) -> String {
+        TEMPLATES
+            .render(CAMPAIGNS.name, &self.ctx.borrow())
+            .unwrap()
+    }
+
+    pub fn page(s: &Settings) -> String {
+        let p = Self::new(s, None);
+        p.render()
+    }
+}
+
+#[actix_web_codegen_const_routes::get(
     path = "PAGES.panel.campaigns.home",
     wrap = "crate::pages::get_page_check_login()"
 )]
-pub async fn home(data: AppData, id: Identity) -> impl Responder {
+pub async fn home(data: AppData, id: Identity) -> PageResult<impl Responder, Campaigns> {
     let username = id.identity().unwrap();
-    let campaigns = list_campaign_runner(&username, &data).await.unwrap();
-    let page = HomePage::new(campaigns).render_once().unwrap();
+    let mut campaigns = list_campaign_runner(&username, &data)
+        .await
+        .map_err(|e| PageError::new(Campaigns::new(&data.settings, None), e))?;
+    let mut template_campaigns = Vec::with_capacity(campaigns.len());
+    for c in campaigns.drain(0..) {
+        template_campaigns.push(c.into())
+    }
 
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(page)
+    let list_campaigns =
+        Campaigns::new(&data.settings, Some(template_campaigns)).render();
+    let html = ContentType::html();
+    Ok(HttpResponse::Ok().content_type(html).body(list_campaigns))
 }
 
 #[cfg(test)]
@@ -145,7 +215,7 @@ mod tests {
         const EMAIL: &str = "templateuser@surveyuserpages.com";
         const CAMPAIGN_NAME: &str = "delcappageusercamaping";
 
-        let data = Data::new().await;
+        let data = get_test_data().await;
         {
             delete_user(NAME, &data).await;
         }
