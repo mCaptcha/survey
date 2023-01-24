@@ -1,7 +1,13 @@
-<. include!("../../../components/base/top.html"); .>
-<body class="panel__body">
-  <. include!("../../nav/index.html"); .>
-  <main class="panel__container"><. include!("./form.html"); .></main>
-  <. include!("../../../components/footer/index.html"); .>
-</body>
-<. include!("../../../components/base/bottom.html"); .>
+{% extends 'base' %} 
+
+{% block nav %}
+  {% include "panel_nav" %}
+{% endblock nav %}
+
+{% block body %}
+  <body class="panel__body">
+    <main class="panel__container">
+      {% include "new_campaign_form" %}
+    </main>
+  </body>
+{% endblock body %}

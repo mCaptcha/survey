@@ -1,11 +1,11 @@
 <h1>Create new campaigns</h1>
-<. include!("../../../components/error/index.html"); .>
 <form
-  action="<.= crate::PAGES.panel.campaigns.new .>"
+  action="<.= page.panel.campaigns.new .>"
   method="POST"
   class="new-campaign__form"
   accept-charset="utf-8"
 >
+  {% include "error_comp" %}
   <label class="form__label" for="name">
     Name
     <input

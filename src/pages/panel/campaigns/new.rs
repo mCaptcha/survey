@@ -14,56 +14,59 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::cell::RefCell;
+
 use actix_identity::Identity;
-use actix_web::HttpResponseBuilder;
-use actix_web::{error::ResponseError, http::header, web, HttpResponse, Responder};
-use lazy_static::lazy_static;
-use my_codegen::{get, post};
-use sailfish::TemplateOnce;
+use actix_web::http::header;
+use actix_web::http::header::ContentType;
+use actix_web::{web, HttpResponse, Responder};
+use tera::Context;
 
 use crate::api::v1::admin::campaigns::{runners, AddCapmaign};
-use crate::errors::*;
-use crate::pages::errors::ErrorPage;
 use crate::AppData;
-use crate::PAGES;
 
-#[derive(Clone, TemplateOnce)]
-#[template(path = "panel/campaigns/new/index.html")]
-struct NewCampaign<'a> {
-    error: Option<ErrorPage<'a>>,
+pub use super::*;
+
+pub struct NewCampaign {
+    ctx: RefCell<Context>,
 }
 
-const PAGE: &str = "New Campaign";
+pub const NEW_CAMPAIGN: TemplateFile =
+    TemplateFile::new("new_campaign", "panel/campaigns/new/index.html");
+pub const NEW_CAMPAIGN_FORM: TemplateFile =
+    TemplateFile::new("new_campaign_form", "panel/campaigns/new/form.html");
 
-impl<'a> Default for NewCampaign<'a> {
-    fn default() -> Self {
-        NewCampaign { error: None }
+impl CtxError for NewCampaign {
+    fn with_error(&self, e: &ReadableError) -> String {
+        self.ctx.borrow_mut().insert(ERROR_KEY, e);
+        self.render()
     }
 }
 
-impl<'a> NewCampaign<'a> {
-    pub fn new(title: &'a str, message: &'a str) -> Self {
-        Self {
-            error: Some(ErrorPage::new(title, message)),
-        }
+impl NewCampaign {
+    pub fn new(settings: &Settings) -> Self {
+        let ctx = RefCell::new(context(settings, "Login"));
+        Self { ctx }
+    }
+
+    pub fn render(&self) -> String {
+        TEMPLATES
+            .render(NEW_CAMPAIGN.name, &self.ctx.borrow())
+            .unwrap()
     }
 }
 
-lazy_static! {
-    static ref INDEX: String = NewCampaign::default().render_once().unwrap();
-}
-
-#[get(
+#[actix_web_codegen_const_routes::get(
     path = "PAGES.panel.campaigns.new",
     wrap = "crate::pages::get_page_check_login()"
 )]
-pub async fn new_campaign() -> impl Responder {
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(&*INDEX.as_str())
+pub async fn new_campaign(data: AppData) -> PageResult<impl Responder, NewCampaign> {
+    let new_campaign = NewCampaign::new(&data.settings).render();
+    let html = ContentType::html();
+    Ok(HttpResponse::Ok().content_type(html).body(new_campaign))
 }
 
-#[post(
+#[actix_web_codegen_const_routes::post(
     path = "PAGES.panel.campaigns.new",
     wrap = "crate::pages::get_page_check_login()"
 )]
@@ -71,30 +74,23 @@ pub async fn new_campaign_submit(
     id: Identity,
     payload: web::Json<AddCapmaign>,
     data: AppData,
-) -> PageResult<impl Responder> {
+) -> PageResult<impl Responder, NewCampaign> {
     let username = id.identity().unwrap();
     let mut payload = payload.into_inner();
 
-    match runners::add_runner(&username, &mut payload, &data).await {
-        Ok(_) => {
-            Ok(HttpResponse::Found()
-                //TODO show stats of new campaign
-                .insert_header((header::LOCATION, PAGES.panel.campaigns.home))
-                .finish())
-        }
-        Err(e) => {
-            let status = e.status_code();
-            let heading = status.canonical_reason().unwrap_or("Error");
+    runners::add_runner(&username, &mut payload, &data)
+        .await
+        .map_err(|e| PageError::new(NewCampaign::new(&data.settings), e))?;
 
-            Ok(HttpResponseBuilder::new(status)
-                .content_type("text/html; charset=utf-8")
-                .body(
-                    NewCampaign::new(heading, &format!("{}", e))
-                        .render_once()
-                        .unwrap(),
-                ))
-        }
-    }
+    Ok(HttpResponse::Found()
+        //TODO show stats of new campaign
+        .insert_header((header::LOCATION, PAGES.panel.campaigns.home))
+        .finish())
+}
+
+pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
+    cfg.service(new_campaign);
+    cfg.service(new_campaign_submit);
 }
 
 #[cfg(test)]
@@ -103,20 +99,19 @@ mod tests {
 
     use super::*;
 
-    use crate::data::Data;
     use crate::tests::*;
     use crate::*;
     use actix_web::http::StatusCode;
 
     #[actix_rt::test]
     async fn new_campaign_form_works() {
-        let data = Data::new().await;
         const NAME: &str = "testusercampaignform";
         const EMAIL: &str = "testcampaignuser@aaa.com";
         const PASSWORD: &str = "longpassword";
 
         const CAMPAIGN_NAME: &str = "testcampaignuser";
 
+        let data = get_test_data().await;
         let app = get_app!(data).await;
         delete_user(NAME, &data).await;
         let (_, _, signin_resp) = register_and_signin(NAME, EMAIL, PASSWORD).await;
