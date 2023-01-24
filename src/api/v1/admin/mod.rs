@@ -24,7 +24,6 @@ pub mod campaigns;
 mod tests;
 
 pub use super::{get_random, get_uuid, RedirectQuery};
-use crate::api::v1::bench::SURVEY_USER_ID;
 
 pub fn services(cfg: &mut ServiceConfig) {
     auth::services(cfg);
@@ -40,7 +39,9 @@ pub mod routes {
     use super::account::routes::Account;
     use super::auth::routes::Auth;
     use super::campaigns::routes::Campaign;
+    use serde::Serialize;
 
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
     pub struct Admin {
         pub auth: Auth,
         pub account: Account,

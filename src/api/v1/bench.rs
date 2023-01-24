@@ -33,9 +33,11 @@ use crate::AppData;
 pub const SURVEY_USER_ID: &str = "survey_user_id";
 
 pub mod routes {
+    use serde::{Deserialize, Serialize};
 
     use actix_auth_middleware::GetLoginRoute;
 
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct Benches {
         pub submit: &'static str,
         pub register: &'static str,
@@ -125,7 +127,7 @@ pub mod runners {
     }
 }
 
-#[my_codegen::get(path = "crate::V1_API_ROUTES.benches.register")]
+#[actix_web_codegen_const_routes::get(path = "crate::V1_API_ROUTES.benches.register")]
 async fn register(
     data: AppData,
     session: Session,
@@ -178,7 +180,7 @@ pub struct SubmissionProof {
 fn is_session_authenticated(r: &HttpRequest, mut pl: &mut Payload) -> bool {
     use actix_web::FromRequest;
     matches!(
-        Session::from_request(&r, &mut pl).into_inner().map(|x| {
+        Session::from_request(r, pl).into_inner().map(|x| {
             let val = x.get::<String>(SURVEY_USER_ID);
             println!("{:#?}", val);
             val
@@ -196,7 +198,7 @@ pub fn get_check_login() -> Authentication<routes::Benches> {
 // }
 //}
 
-#[my_codegen::post(
+#[actix_web_codegen_const_routes::post(
     path = "crate::V1_API_ROUTES.benches.submit",
     wrap = "get_check_login()"
 )]
@@ -307,7 +309,7 @@ pub struct BenchConfig {
     pub difficulties: Vec<i32>,
 }
 
-#[my_codegen::get(
+#[actix_web_codegen_const_routes::get(
     path = "crate::V1_API_ROUTES.benches.fetch",
     wrap = "get_check_login()"
 )]

@@ -68,7 +68,7 @@ async fn update_password_runner(
     Ok(())
 }
 
-#[my_codegen::post(
+#[actix_web_codegen_const_routes::post(
     path = "crate::V1_API_ROUTES.admin.account.update_password",
     wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]
@@ -118,7 +118,6 @@ mod tests {
     use actix_web::test;
 
     use crate::api::v1::ROUTES;
-    use crate::data::Data;
     use crate::tests::*;
 
     #[actix_rt::test]
@@ -128,7 +127,7 @@ mod tests {
         const EMAIL: &str = "updatepassuser@a.com";
 
         {
-            let data = Data::new().await;
+            let data = get_test_data().await;
             delete_user(NAME, &data).await;
         }
 

@@ -22,7 +22,7 @@ use super::auth::runners::Password;
 use crate::errors::*;
 use crate::AppData;
 
-#[my_codegen::post(
+#[actix_web_codegen_const_routes::post(
     path = "crate::V1_API_ROUTES.admin.account.delete",
     wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]

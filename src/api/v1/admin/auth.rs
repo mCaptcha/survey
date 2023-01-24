@@ -26,7 +26,9 @@ use crate::AppData;
 
 pub mod routes {
     use actix_auth_middleware::GetLoginRoute;
+    use serde::{Deserialize, Serialize};
 
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Auth {
         pub logout: &'static str,
         pub login: &'static str,
@@ -153,7 +155,7 @@ pub mod runners {
         payload: &Register,
         data: &AppData,
     ) -> ServiceResult<()> {
-        if !crate::SETTINGS.allow_registration {
+        if !data.settings.allow_registration {
             return Err(ServiceError::ClosedForRegistration);
         }
 
@@ -222,7 +224,9 @@ pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(login);
     cfg.service(signout);
 }
-#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.auth.register")]
+#[actix_web_codegen_const_routes::post(
+    path = "crate::V1_API_ROUTES.admin.auth.register"
+)]
 async fn register(
     payload: web::Json<runners::Register>,
     data: AppData,
@@ -231,7 +235,7 @@ async fn register(
     Ok(HttpResponse::Ok())
 }
 
-#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.auth.login")]
+#[actix_web_codegen_const_routes::post(path = "crate::V1_API_ROUTES.admin.auth.login")]
 async fn login(
     id: Identity,
     payload: web::Json<runners::Login>,
@@ -250,7 +254,7 @@ async fn login(
         Ok(HttpResponse::Ok().into())
     }
 }
-#[my_codegen::get(
+#[actix_web_codegen_const_routes::get(
     path = "crate::V1_API_ROUTES.admin.auth.logout",
     wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]

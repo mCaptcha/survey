@@ -20,7 +20,6 @@ use actix_web::test;
 
 use crate::api::v1::admin::auth::runners::{Login, Register};
 use crate::api::v1::ROUTES;
-use crate::data::Data;
 use crate::errors::*;
 use crate::*;
 
@@ -28,7 +27,7 @@ use crate::tests::*;
 
 #[actix_rt::test]
 async fn auth_works() {
-    let data = Data::new().await;
+    let data = get_test_data().await;
     const NAME: &str = "testuser";
     const PASSWORD: &str = "longpassword";
     const EMAIL: &str = "testuser1@a.com";
@@ -146,7 +145,7 @@ async fn serverside_password_validation_works() {
     const NAME: &str = "testuser542";
     const PASSWORD: &str = "longpassword2";
 
-    let data = Data::new().await;
+    let data = get_test_data().await;
     delete_user(NAME, &data).await;
 
     let app = get_app!(data).await;

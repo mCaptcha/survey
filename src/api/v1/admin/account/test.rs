@@ -23,7 +23,6 @@ use super::username::Username;
 use super::*;
 use crate::api::v1::admin::auth::runners::Password;
 use crate::api::v1::ROUTES;
-use crate::data::Data;
 use crate::*;
 
 use crate::errors::*;
@@ -36,7 +35,7 @@ async fn uname_email_exists_works() {
     const EMAIL: &str = "testuserexists@a.com2";
 
     {
-        let data = Data::new().await;
+        let data = get_test_data().await;
         delete_user(NAME, &data).await;
     }
 
@@ -126,7 +125,7 @@ async fn email_udpate_password_validation_del_userworks() {
     const EMAIL2: &str = "eupdauser@a.com";
 
     {
-        let data = Data::new().await;
+        let data = get_test_data().await;
         delete_user(NAME, &data).await;
         delete_user(NAME2, &data).await;
     }
@@ -209,7 +208,7 @@ async fn username_update_works() {
     const NAME_CHANGE: &str = "terstusrtdsxx";
 
     {
-        let data = Data::new().await;
+        let data = get_test_data().await;
 
         futures::join!(
             delete_user(NAME, &data),

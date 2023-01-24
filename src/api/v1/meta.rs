@@ -29,6 +29,9 @@ pub struct BuildDetails {
 }
 
 pub mod routes {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct Meta {
         pub build_details: &'static str,
         pub health: &'static str,
@@ -45,7 +48,7 @@ pub mod routes {
 }
 
 /// emmits build details of the bninary
-#[my_codegen::get(path = "crate::V1_API_ROUTES.meta.build_details")]
+#[actix_web_codegen_const_routes::get(path = "crate::V1_API_ROUTES.meta.build_details")]
 async fn build_details() -> impl Responder {
     let build = BuildDetails {
         version: VERSION,
@@ -61,7 +64,7 @@ pub struct Health {
 }
 
 /// checks all components of the system
-#[my_codegen::get(path = "crate::V1_API_ROUTES.meta.health")]
+#[actix_web_codegen_const_routes::get(path = "crate::V1_API_ROUTES.meta.health")]
 async fn health(data: AppData) -> impl Responder {
     use sqlx::Connection;
 
@@ -87,6 +90,7 @@ mod tests {
 
     use super::*;
     use crate::api::v1::services;
+    use crate::tests::get_test_data;
     use crate::*;
 
     #[actix_rt::test]
@@ -106,7 +110,7 @@ mod tests {
     #[actix_rt::test]
     async fn health_works() {
         println!("{}", V1_API_ROUTES.meta.health);
-        let data = Data::new().await;
+        let data = get_test_data().await;
         let app = get_app!(data).await;
 
         let resp = test::call_service(

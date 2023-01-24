@@ -29,7 +29,9 @@ pub struct Email {
     pub email: String,
 }
 
-#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.account.email_exists")]
+#[actix_web_codegen_const_routes::post(
+    path = "crate::V1_API_ROUTES.admin.account.email_exists"
+)]
 pub async fn email_exists(
     payload: web::Json<AccountCheckPayload>,
     data: AppData,
@@ -53,7 +55,7 @@ pub async fn email_exists(
 }
 
 /// update email
-#[my_codegen::post(
+#[actix_web_codegen_const_routes::post(
     path = "crate::V1_API_ROUTES.admin.account.update_email",
     wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]

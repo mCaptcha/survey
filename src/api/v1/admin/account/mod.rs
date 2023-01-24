@@ -28,7 +28,9 @@ pub mod username;
 pub use super::auth;
 
 pub mod routes {
+    use serde::{Deserialize, Serialize};
 
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Account {
         pub delete: &'static str,
         pub email_exists: &'static str,

@@ -14,12 +14,15 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use serde::Serialize;
+
 use super::admin::routes::Admin;
 use super::bench::routes::Benches;
 use super::meta::routes::Meta;
 
 pub const ROUTES: Routes = Routes::new();
 
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct Routes {
     pub admin: Admin,
     pub meta: Meta,

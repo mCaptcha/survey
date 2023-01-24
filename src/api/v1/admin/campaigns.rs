@@ -27,6 +27,9 @@ use crate::errors::*;
 use crate::AppData;
 
 pub mod routes {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Campaign {
         pub add: &'static str,
         pub delete: &'static str,
@@ -250,7 +253,7 @@ pub mod runners {
     }
 }
 
-#[my_codegen::post(
+#[actix_web_codegen_const_routes::post(
     path = "crate::V1_API_ROUTES.admin.campaign.delete",
     wrap = "get_admin_check_login()"
 )]
@@ -279,7 +282,7 @@ pub async fn delete(
 //    pub feedbacks: Vec<Feedback>,
 //}
 //
-//#[my_codegen::post(
+//#[actix_web_codegen_const_routes::post(
 //    path = "crate::V1_API_ROUTES.campaign.get_feedback",
 //    wrap = "crate::CheckLogin"
 //)]
@@ -300,7 +303,7 @@ pub struct ListCampaignResp {
     pub uuid: String,
 }
 
-#[my_codegen::post(
+#[actix_web_codegen_const_routes::post(
     path = "crate::V1_API_ROUTES.admin.campaign.list",
     wrap = "get_admin_check_login()"
 )]
@@ -332,7 +335,7 @@ pub fn services(cfg: &mut web::ServiceConfig) {
     //cfg.service(get_feedback);
 }
 
-#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.campaign.add")]
+#[actix_web_codegen_const_routes::post(path = "crate::V1_API_ROUTES.admin.campaign.add")]
 async fn add(
     payload: web::Json<AddCapmaign>,
     data: AppData,
@@ -350,7 +353,6 @@ async fn add(
 #[cfg(test)]
 mod tests {
     use crate::api::v1::bench::Submission;
-    use crate::data::Data;
     use crate::errors::*;
     use crate::tests::*;
     use crate::*;
@@ -360,7 +362,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_bench_register_works() {
-        let data = Data::new().await;
+        let data = get_test_data().await;
         let app = get_app!(data).await;
         let signin_resp = test::call_service(
             &app,
@@ -400,7 +402,7 @@ mod tests {
         const THREADS: i32 = 4;
 
         {
-            let data = Data::new().await;
+            let data = get_test_data().await;
             delete_user(NAME, &data).await;
         }
 

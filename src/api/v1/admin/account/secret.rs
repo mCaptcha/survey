@@ -29,7 +29,7 @@ pub struct Secret {
     pub secret: String,
 }
 
-#[my_codegen::get(
+#[actix_web_codegen_const_routes::get(
     path = "crate::V1_API_ROUTES.admin.account.get_secret",
     wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]
@@ -47,7 +47,7 @@ async fn get_secret(id: Identity, data: AppData) -> ServiceResult<impl Responder
     Ok(HttpResponse::Ok().json(secret))
 }
 
-#[my_codegen::post(
+#[actix_web_codegen_const_routes::post(
     path = "crate::V1_API_ROUTES.admin.account.update_secret",
     wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]

@@ -24,7 +24,9 @@ use super::{AccountCheckPayload, AccountCheckResp};
 use crate::errors::*;
 use crate::AppData;
 
-#[my_codegen::post(path = "crate::V1_API_ROUTES.admin.account.username_exists")]
+#[actix_web_codegen_const_routes::post(
+    path = "crate::V1_API_ROUTES.admin.account.username_exists"
+)]
 async fn username_exists(
     payload: web::Json<AccountCheckPayload>,
     data: AppData,
@@ -65,7 +67,7 @@ pub struct Username {
 }
 
 /// update username
-#[my_codegen::post(
+#[actix_web_codegen_const_routes::post(
     path = "crate::V1_API_ROUTES.admin.account.update_username",
     wrap = "crate::api::v1::admin::get_admin_check_login()"
 )]

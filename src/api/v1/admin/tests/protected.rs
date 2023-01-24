@@ -18,7 +18,6 @@
 use actix_web::http::StatusCode;
 use actix_web::test;
 
-use crate::data::Data;
 use crate::*;
 
 use crate::tests::*;
@@ -32,7 +31,7 @@ async fn protected_routes_work() {
     let get_protected_urls = [V1_API_ROUTES.admin.auth.logout];
 
     {
-        let data = Data::new().await;
+        let data = get_test_data().await;
         delete_user(NAME, &data).await;
     }
 
