@@ -16,7 +16,6 @@
  */
 use std::env;
 
-use lazy_static::lazy_static;
 use sqlx::postgres::PgPoolOptions;
 
 mod settings;
@@ -24,17 +23,13 @@ mod settings;
 pub use settings::Settings;
 
 #[cfg(not(tarpaulin_include))]
-lazy_static! {
-    #[cfg(not(tarpaulin_include))]
-    pub static ref SETTINGS: Settings = Settings::new().unwrap();
-}
-
-#[cfg(not(tarpaulin_include))]
 #[actix_rt::main]
 async fn main() {
+    let settings = Settings::new().unwrap();
+
     let db = PgPoolOptions::new()
-        .max_connections(SETTINGS.database.pool)
-        .connect(&SETTINGS.database.url)
+        .max_connections(settings.database.pool)
+        .connect(&settings.database.url)
         .await
         .expect("Unable to form database pool");
 
@@ -53,7 +48,7 @@ fn build() {
 
     // note: add error checking yourself.
     let output = Command::new("git")
-        .args(&["rev-parse", "HEAD"])
+        .args(["rev-parse", "HEAD"])
         .output()
         .unwrap();
     let git_hash = String::from_utf8(output.stdout).unwrap();
