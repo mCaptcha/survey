@@ -22,13 +22,14 @@ use argon2_creds::{Config, ConfigBuilder, PasswordPolicy};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 
-use crate::SETTINGS;
+use crate::settings::Settings;
 
 /// App data
 pub struct Data {
-    /// databse pool
+    /// database pool
     pub db: PgPool,
     pub creds: Config,
+    pub settings: Settings,
 }
 
 impl Data {
@@ -44,7 +45,7 @@ impl Data {
 
     #[cfg(not(tarpaulin_include))]
     /// create new instance of app data
-    pub async fn new() -> Arc<Self> {
+    pub async fn new(settings: Settings) -> Arc<Self> {
         let creds = Self::get_creds();
         let c = creds.clone();
         #[allow(unused_variables)]
@@ -55,14 +56,18 @@ impl Data {
         });
 
         let db = PgPoolOptions::new()
-            .max_connections(SETTINGS.database.pool)
-            .connect(&SETTINGS.database.url)
+            .max_connections(settings.database.pool)
+            .connect(&settings.database.url)
             .await
             .expect("Unable to form database pool");
 
         #[cfg(not(debug_assertions))]
         init.join().unwrap();
-        let data = Data { db, creds };
+        let data = Data {
+            db,
+            creds,
+            settings,
+        };
 
         Arc::new(data)
     }
