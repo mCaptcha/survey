@@ -27,6 +27,7 @@ use crate::{GIT_COMMIT_HASH, VERSION};
 
 pub mod auth;
 pub mod errors;
+pub mod panel;
 pub mod routes;
 
 //pub use routes::get_auth_middleware;
@@ -74,6 +75,7 @@ lazy_static! {
         errors::register_templates(&mut tera);
         tera.autoescape_on(vec![".html", ".sql"]);
         auth::register_templates(&mut tera);
+        panel::register_templates(&mut tera);
         tera
     };
 }
@@ -146,7 +148,7 @@ impl<'a> Footer<'a> {
 
 pub fn services(cfg: &mut ServiceConfig) {
     auth::services(cfg);
-    //panel::services(cfg);
+    panel::services(cfg);
 }
 
 pub fn get_page_check_login() -> Authentication<auth::routes::Auth> {
@@ -167,7 +169,6 @@ mod terra_tests {
             BASE,
             FOOTER,
             PANEL_NAV,
-            //            auth::AUTH_BASE,
             auth::login::LOGIN,
             auth::join::REGISTER,
             errors::ERROR_TEMPLATE,
@@ -182,7 +183,7 @@ mod terra_tests {
 
 #[cfg(test)]
 mod http_page_tests {
-    use actix_web::http::StatusCode;
+    use actix_web::http::{header, StatusCode};
     use actix_web::test;
 
     use crate::*;
@@ -197,97 +198,108 @@ mod http_page_tests {
         let app = get_app!(data).await;
 
         for file in [PAGES.auth.login, PAGES.auth.join, PAGES.home].iter() {
+            println!("[*] Testing route: {}", file);
             let resp = get_request!(&app, file);
-            assert_eq!(resp.status(), StatusCode::OK);
+            if file != &PAGES.home {
+                assert_eq!(resp.status(), StatusCode::OK);
+            } else {
+                assert_eq!(resp.status(), StatusCode::FOUND);
+                let headers = resp.headers();
+                let loc = headers.get(header::LOCATION).unwrap();
+                let resp = get_request!(&app, loc.to_str().unwrap());
+                assert_eq!(resp.status(), StatusCode::OK);
+            }
         }
     }
 }
 
-//#[cfg(not(tarpaulin_include))]
-//#[cfg(test)]
-//mod tests {
-//    use actix_web::http::{header, StatusCode};
-//    use actix_web::test;
-//
-//    use crate::tests::*;
-//    use crate::*;
-//
-//    #[actix_rt::test]
-//    async fn protected_pages_templates_work() {
-//        const NAME: &str = "templateuser";
-//        const PASSWORD: &str = "longpassword";
-//        const EMAIL: &str = "templateuser@a.com";
-//        const CAMPAIGN_NAME: &str = "delcappageusercamaping";
-//
-//        let settings = Settings::new().unwrap();
-//        let data = Data::new(settings).await;
-//        {
-//            delete_user(NAME, &data).await;
-//        }
-//
-//        let (_, _, signin_resp) = register_and_signin(NAME, EMAIL, PASSWORD).await;
-//        let cookies = get_cookie!(signin_resp);
-//
-//        let campaign =
-//            create_new_campaign(CAMPAIGN_NAME, data.clone(), cookies.clone()).await;
-//
-//        let app = get_app!(data).await;
-//
-//        let urls = vec![
-//            PAGES.home.to_string(),
-//            PAGES.panel.campaigns.home.to_string(),
-//            PAGES.panel.campaigns.new.to_string(),
-//            //            PAGES.panel.campaigns.get_feedback_route(&campaign.uuid),
-//            PAGES
-//                .panel
-//                .campaigns
-//                .get_delete_route(&campaign.campaign_id),
-//        ];
-//
-//        for url in urls.iter() {
-//            let resp =
-//                test::call_service(&app, test::TestRequest::get().uri(url).to_request())
-//                    .await;
-//            if resp.status() != StatusCode::FOUND {
-//                println!("Probably error url: {}", url);
-//            }
-//            assert_eq!(resp.status(), StatusCode::FOUND);
-//
-//            let authenticated_resp = test::call_service(
-//                &app,
-//                test::TestRequest::get()
-//                    .uri(url)
-//                    .cookie(cookies.clone())
-//                    .to_request(),
-//            )
-//            .await;
-//
-//            if url == PAGES.home {
-//                assert_eq!(authenticated_resp.status(), StatusCode::FOUND);
-//                let headers = authenticated_resp.headers();
-//                assert_eq!(
-//                    headers.get(header::LOCATION).unwrap(),
-//                    &*super::panel::DEFAULT_CAMPAIGN_ABOUT
-//                );
-//            } else {
-//                assert_eq!(authenticated_resp.status(), StatusCode::OK);
-//            }
-//        }
-//
-//        delete_user(NAME, &data).await;
-//    }
-//
-//    #[actix_rt::test]
-//    async fn public_pages_tempaltes_work() {
-//        let app = test::init_service(App::new().configure(crate::pages::services)).await;
-//        let urls = vec![PAGES.auth.login, PAGES.auth.join]; //, PAGES.sitemap];
-//
-//        for url in urls.iter() {
-//            let resp =
-//                test::call_service(&app, test::TestRequest::get().uri(url).to_request())
-//                    .await;
-//
-//            assert_eq!(resp.status(), StatusCode::OK);
-//        }
-//    }
-//}
+#[cfg(not(tarpaulin_include))]
+#[cfg(test)]
+mod tests {
+    use actix_web::http::{header, StatusCode};
+    use actix_web::test;
+
+    use crate::tests::*;
+    use crate::*;
+
+    #[actix_rt::test]
+    async fn protected_pages_templates_work() {
+        const NAME: &str = "templateuser";
+        const PASSWORD: &str = "longpassword";
+        const EMAIL: &str = "templateuser@a.com";
+        const CAMPAIGN_NAME: &str = "delcappageusercamaping";
+
+        let data = get_test_data().await;
+        {
+            delete_user(NAME, &data).await;
+        }
+
+        let (_, _, signin_resp) = register_and_signin(NAME, EMAIL, PASSWORD).await;
+        let cookies = get_cookie!(signin_resp);
+
+        let campaign =
+            create_new_campaign(CAMPAIGN_NAME, data.clone(), cookies.clone()).await;
+
+        let app = get_app!(data).await;
+
+        let urls = vec![
+            PAGES.home.to_string(),
+            PAGES.panel.campaigns.home.to_string(),
+            PAGES.panel.campaigns.new.to_string(),
+            //            PAGES.panel.campaigns.get_feedback_route(&campaign.uuid),
+            PAGES
+                .panel
+                .campaigns
+                .get_delete_route(&campaign.campaign_id),
+        ];
+
+        for url in urls.iter() {
+            let resp =
+                test::call_service(&app, test::TestRequest::get().uri(url).to_request())
+                    .await;
+            if resp.status() != StatusCode::FOUND {
+                println!("Probably error url: {}", url);
+            }
+            assert_eq!(resp.status(), StatusCode::FOUND);
+
+            let authenticated_resp = test::call_service(
+                &app,
+                test::TestRequest::get()
+                    .uri(url)
+                    .cookie(cookies.clone())
+                    .to_request(),
+            )
+            .await;
+
+            if url == PAGES.home {
+                assert_eq!(authenticated_resp.status(), StatusCode::FOUND);
+                let headers = authenticated_resp.headers();
+                assert_eq!(
+                    headers.get(header::LOCATION).unwrap().to_str().unwrap(),
+                    PAGES
+                        .panel
+                        .campaigns
+                        .get_about_route(&data.settings.default_campaign)
+                );
+            } else {
+                assert_eq!(authenticated_resp.status(), StatusCode::OK);
+            }
+        }
+
+        delete_user(NAME, &data).await;
+    }
+
+    #[actix_rt::test]
+    async fn public_pages_tempaltes_work() {
+        let data = get_test_data().await;
+        let app = get_app!(data).await;
+        let urls = vec![PAGES.auth.login, PAGES.auth.join]; //, PAGES.sitemap];
+        for url in urls.iter() {
+            let resp =
+                test::call_service(&app, test::TestRequest::get().uri(url).to_request())
+                    .await;
+
+            assert_eq!(resp.status(), StatusCode::OK);
+        }
+    }
+}

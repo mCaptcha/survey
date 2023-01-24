@@ -15,17 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 use actix_auth_middleware::GetLoginRoute;
+use serde::{Deserialize, Serialize};
 
 use super::auth::routes::Auth;
-use super::errors::routes::Errors;
 use super::panel::routes::Panel;
-pub const ROUTES: Routes = Routes::new();
+pub const PAGES: Routes = Routes::new();
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Routes {
     pub home: &'static str,
     pub auth: Auth,
     pub panel: Panel,
-    pub errors: Errors,
     pub about: &'static str,
     pub sitemap: &'static str,
     pub thanks: &'static str,
@@ -42,7 +42,6 @@ impl Routes {
             auth: Auth::new(),
             panel,
             home,
-            errors: Errors::new(),
             about: "https://mcaptcha.org/about/",
             sitemap: "/sitemap.xml",
             thanks: "https://mcaptcha.org/thanks",
@@ -65,7 +64,7 @@ impl GetLoginRoute for Routes {
             //                uri::Builder::new().path_and_query(
             format!(
                 "{}?redirect_to={}",
-                self.auth.join.to_string(),
+                self.auth.join,
                 urlencoding::encode(redirect_to)
             )
         //                let mut url: Uri = self.register.parse().unwrap();
