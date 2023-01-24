@@ -15,22 +15,62 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 use actix_identity::Identity;
-use actix_web::HttpResponseBuilder;
-use actix_web::{
-    error::ResponseError,
-    http::{header, StatusCode},
-    web, HttpResponse, Responder,
-};
-use my_codegen::{get, post};
-use sailfish::TemplateOnce;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api::v1::admin::auth::runners::{login_runner, Login, Password};
 use crate::api::v1::admin::campaigns::runners;
 use crate::errors::*;
-use crate::pages::auth::sudo::SudoPage;
+//use crate::AppData;
+//use crate::PAGES;
+
+use std::cell::RefCell;
+
+use actix_web::http::header;
+use actix_web::http::header::ContentType;
+use actix_web::{web, HttpResponse, Responder};
+use tera::Context;
+
+//use crate::api::v1::admin::campaigns::{runners, AddCapmaign};
 use crate::AppData;
-use crate::PAGES;
+
+pub use super::*;
+
+pub struct SudoDelete {
+    ctx: RefCell<Context>,
+}
+
+pub const SUDO_DELETE: TemplateFile =
+    TemplateFile::new("sudo_delete_campaign", "panel/campaigns/delete/index.html");
+
+impl CtxError for SudoDelete {
+    fn with_error(&self, e: &ReadableError) -> String {
+        self.ctx.borrow_mut().insert(ERROR_KEY, e);
+        self.render()
+    }
+}
+
+impl SudoDelete {
+    pub fn new(settings: &Settings, payload: Option<CampaignDeletePayload>) -> Self {
+        let ctx = RefCell::new(context(settings, "Login"));
+        if let Some(payload) = payload {
+            ctx.borrow_mut().insert(PAYLOAD_KEY, &payload);
+        }
+        Self { ctx }
+    }
+
+    pub fn render(&self) -> String {
+        TEMPLATES
+            .render(SUDO_DELETE.name, &self.ctx.borrow())
+            .unwrap()
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+pub struct CampaignDeletePayload {
+    pub title: String,
+    pub delete_url: String,
+}
 
 async fn get_title(
     username: &str,
@@ -57,97 +97,67 @@ async fn get_title(
     Ok(format!("Delete camapign \"{}\"?", campaign.name))
 }
 
-#[get(
+#[actix_web_codegen_const_routes::get(
     path = "PAGES.panel.campaigns.delete",
     wrap = "crate::pages::get_page_check_login()"
 )]
 pub async fn delete_campaign(
     id: Identity,
-    path: web::Path<String>,
+    path: web::Path<Uuid>,
     data: AppData,
-) -> PageResult<impl Responder> {
+) -> PageResult<impl Responder, SudoDelete> {
     let username = id.identity().unwrap();
-    let path = path.into_inner();
-    let uuid = Uuid::parse_str(&path).map_err(|_| ServiceError::NotAnId)?;
+    let uuid = path.into_inner();
 
-    let title = get_title(&username, &uuid, &data).await?;
+    let title = get_title(&username, &uuid, &data)
+        .await
+        .map_err(|e| PageError::new(SudoDelete::new(&data.settings, None), e))?;
+    let delete_url = crate::PAGES
+        .panel
+        .campaigns
+        .get_delete_route(&uuid.to_string());
 
-    let page = SudoPage::new(
-        &crate::PAGES.panel.campaigns.get_delete_route(&path),
-        &title,
-    )
-    .render_once()
-    .unwrap();
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(page))
+    let payload = CampaignDeletePayload { title, delete_url };
+
+    let page = SudoDelete::new(&data.settings, Some(payload)).render();
+    let html = ContentType::html();
+    Ok(HttpResponse::Ok().content_type(html).body(page))
 }
 
-#[post(
+#[actix_web_codegen_const_routes::post(
     path = "PAGES.panel.campaigns.delete",
     wrap = "crate::pages::get_page_check_login()"
 )]
 pub async fn delete_campaign_submit(
     id: Identity,
-    path: web::Path<String>,
+    uuid: web::Path<Uuid>,
     payload: web::Form<Password>,
     data: AppData,
-) -> PageResult<impl Responder> {
+) -> PageResult<impl Responder, SudoDelete> {
     let username = id.identity().unwrap();
-    let path = path.into_inner();
-    let uuid = Uuid::parse_str(&path).map_err(|_| ServiceError::NotAnId)?;
     let payload = payload.into_inner();
-
-    async fn render_err(
-        e: ServiceError,
-        username: &str,
-        uuid: &Uuid,
-        path: &str,
-        data: &AppData,
-    ) -> ServiceResult<(String, StatusCode)> {
-        let status = e.status_code();
-        let heading = status.canonical_reason().unwrap_or("Error");
-
-        let form_route = crate::V1_API_ROUTES.admin.campaign.get_delete_route(path);
-        let title = get_title(username, uuid, data).await?;
-        let mut ctx = SudoPage::new(&form_route, &title);
-        let err = format!("{}", e);
-        ctx.set_err(heading, &err);
-        let page = ctx.render_once().unwrap();
-        Ok((page, status))
-    }
 
     let creds = Login {
         login: username,
         password: payload.password,
     };
 
-    match login_runner(&creds, &data).await {
-        Err(e) => {
-            let (page, status) =
-                render_err(e, &creds.login, &uuid, &path, &data).await?;
+    login_runner(&creds, &data)
+        .await
+        .map_err(|e| PageError::new(SudoDelete::new(&data.settings, None), e))?;
+    runners::delete(&uuid, &creds.login, &data)
+        .await
+        .map_err(|e| PageError::new(SudoDelete::new(&data.settings, None), e))?;
 
-            Ok(HttpResponseBuilder::new(status)
-                .content_type("text/html; charset=utf-8")
-                .body(page))
-        }
-        Ok(_) => {
-            match runners::delete(&uuid, &creds.login, &data).await {
-                Ok(_) => Ok(HttpResponse::Found()
-                    //TODO show stats of new campaign
-                    .insert_header((header::LOCATION, PAGES.panel.campaigns.home))
-                    .finish()),
+    Ok(HttpResponse::Found()
+        //TODO show stats of new campaign
+        .insert_header((header::LOCATION, PAGES.panel.campaigns.home))
+        .finish())
+}
 
-                Err(e) => {
-                    let (page, status) =
-                        render_err(e, &creds.login, &uuid, &path, &data).await?;
-                    Ok(HttpResponseBuilder::new(status)
-                        .content_type("text/html; charset=utf-8")
-                        .body(page))
-                }
-            }
-        }
-    }
+pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
+    cfg.service(delete_campaign);
+    cfg.service(delete_campaign_submit);
 }
 
 #[cfg(test)]
@@ -156,19 +166,18 @@ mod tests {
 
     use super::*;
 
-    use crate::data::Data;
     use crate::tests::*;
     use crate::*;
     use actix_web::http::StatusCode;
 
     #[actix_rt::test]
     async fn new_campaign_form_works() {
-        let data = Data::new().await;
         const NAME: &str = "delcappageuser";
         const EMAIL: &str = "delcappageuser@aaa.com";
         const PASSWORD: &str = "longpassword";
         const CAMPAIGN_NAME: &str = "delcappageusercamaping";
 
+        let data = get_test_data().await;
         let app = get_app!(data).await;
         delete_user(NAME, &data).await;
         let (_, _, signin_resp) = register_and_signin(NAME, EMAIL, PASSWORD).await;
