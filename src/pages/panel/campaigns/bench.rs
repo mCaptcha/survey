@@ -14,46 +14,55 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-use std::str::FromStr;
+use std::cell::RefCell;
 
+use actix_web::http::header::ContentType;
 use actix_web::{web, HttpResponse, Responder};
-use lazy_static::lazy_static;
-use my_codegen::get;
-use sailfish::TemplateOnce;
+use tera::Context;
 use uuid::Uuid;
 
-use crate::errors::*;
-use crate::pages::errors::ErrorPage;
+use crate::AppData;
 use crate::PAGES;
 
-#[derive(TemplateOnce)]
-#[template(path = "bench/index.html")]
-struct Bench<'a> {
-    error: Option<ErrorPage<'a>>,
-}
-const PAGE: &str = "Survey";
+pub use super::*;
 
-impl<'a> Default for Bench<'a> {
-    fn default() -> Self {
-        Bench { error: None }
+pub struct Bench {
+    ctx: RefCell<Context>,
+}
+
+pub const BENCH: TemplateFile = TemplateFile::new("new_campaign", "bench/index.html");
+
+impl CtxError for Bench {
+    fn with_error(&self, e: &ReadableError) -> String {
+        self.ctx.borrow_mut().insert(ERROR_KEY, e);
+        self.render()
     }
 }
 
-lazy_static! {
-    static ref BENCH: String = Bench::default().render_once().unwrap();
+impl Bench {
+    pub fn new(settings: &Settings) -> Self {
+        let ctx = RefCell::new(context(settings, "Login"));
+        Self { ctx }
+    }
+
+    pub fn render(&self) -> String {
+        TEMPLATES.render(BENCH.name, &self.ctx.borrow()).unwrap()
+    }
 }
 
-#[get(
+#[actix_web_codegen_const_routes::get(
     path = "PAGES.panel.campaigns.bench",
     wrap = "crate::api::v1::bench::get_check_login()"
 )]
-pub async fn bench(path: web::Path<String>) -> PageResult<impl Responder> {
-    let path = path.into_inner();
+pub async fn bench(
+    data: AppData,
+    _path: web::Path<Uuid>,
+) -> PageResult<impl Responder, Bench> {
+    let bench = Bench::new(&data.settings).render();
+    let html = ContentType::html();
+    Ok(HttpResponse::Ok().content_type(html).body(bench))
+}
 
-    match Uuid::from_str(&path) {
-        Err(_) => Err(PageError::PageDoesntExist),
-        Ok(_) => Ok(HttpResponse::Ok()
-            .content_type("text/html; charset=utf-8")
-            .body(&*BENCH.as_str())),
-    }
+pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
+    cfg.service(bench);
 }

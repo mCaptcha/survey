@@ -1,143 +1,145 @@
-<. include!("../components/base/top.html"); .>
-<body class="survey__body">
-  <main class="survey__container">
-    <. include!("../components/error/index.html"); .>
-    <div id="pre-bench">
-      <h1>Click to Start Benchmark</h1>
-      <form class="new-campaign__form" accept-charset="utf-8">
-        <label class="form__label" for="name">
-          Device name
-          <input
-            class="form__input"
-            name="name"
-            required
-            id="name"
-            type="text"
-          />
-        </label>
+{% extends 'base' %} 
+{% block body %}
+  <body class="survey__body">
+    <main class="survey__container">
+      {% include "error_comp" %}
 
-        <!--        <button id="start" type="submit">Start</button> -->
-        <button id="start" class="form__submit" type="submit">Start</button>
-      </form>
-    </div>
+      <div id="pre-bench">
+        <h1>Click to Start Benchmark</h1>
+        <form class="new-campaign__form" accept-charset="utf-8">
+          <label class="form__label" for="name">
+            Device name
+            <input
+              class="form__input"
+              name="name"
+              required
+              id="name"
+              type="text"
+            />
+          </label>
 
-    <noscript>
-      <b>
-        This is a WASM benchmark, please enable JavScript to run it. We don't
-        collect any data and
-        <a href="https://github.com/mCaptcha/survey"
-          >source code is available here</a
-        >
-      </b>
-    </noscript>
-
-    <div id="bench">
-      <h1 id="status" class="name">Running benchmark</h1>
-      <div id="counter"></div>
-      <button class="btn" id="advance">Show Advanced Log</button>
-
-      <div id="winner-instructions">
-        <h2>Winner Announcement</h2>
-        <p>
-          The winners will be announed on the organisation website
-          <a href="https://mcaptcha.org/blog/survey" target="_blank">here</a> on
-          December 1, 2021. The winning submission IDs will be published and the
-          winners expected to provide the submission proof to claim their
-          rewards.
-        </p>
+          <!--        <button id="start" type="submit">Start</button> -->
+          <button id="start" class="form__submit" type="submit">Start</button>
+        </form>
       </div>
-      <div id="submission-proof"></div>
 
-      <div class="advance-log" id="device-info"></div>
+      <noscript>
+        <b>
+          This is a WASM benchmark, please enable JavScript to run it. We don't
+          collect any data and
+          <a href="https://github.com/mCaptcha/survey"
+            >source code is available here</a
+          >
+        </b>
+      </noscript>
 
-      <table class="advance-log">
-        <thead>
-          <tr>
-            <th>Difficulty factor</th>
-            <th>Duration(ms)</th>
-          </tr>
-        </thead>
-        <tbody id="stats"></tbody>
-      </table>
-    </div>
-  </main>
-  <. include!("../components/footer/index.html"); .>
-</body>
-<style>
-  body {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    display: hidden;
-    align-items: center;
-  }
+      <div id="bench">
+        <h1 id="status" class="name">Running benchmark</h1>
+        <div id="counter"></div>
+        <button class="btn" id="advance">Show Advanced Log</button>
 
-  #pre-bench,
-  #bench {
-    width: 100%;
-    display: flex;
-    margin: 40px auto;
-    align-items: center;
-    flex-direction: column;
-  }
+        <div id="winner-instructions">
+          <h2>Winner Announcement</h2>
+          <p>
+            The winners will be announed on the organisation website
+            <a href="https://mcaptcha.org/blog/survey" target="_blank">here</a> on
+            December 1, 2021. The winning submission IDs will be published and the
+            winners expected to provide the submission proof to claim their
+            rewards.
+          </p>
+        </div>
+        <div id="submission-proof"></div>
 
-  #bench {
-    display: none;
-  }
+        <div class="advance-log" id="device-info"></div>
 
-  .survey__container {
-    flex: 2;
-    margin: 0 auto;
-  }
+        <table class="advance-log">
+          <thead>
+            <tr>
+              <th>Difficulty factor</th>
+              <th>Duration(ms)</th>
+            </tr>
+          </thead>
+          <tbody id="stats"></tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+  <style>
+    body {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      display: hidden;
+      align-items: center;
+    }
 
-  #status {
-    max-width: 80%;
-    margin: auto;
-  }
+    #pre-bench,
+    #bench {
+      width: 100%;
+      display: flex;
+      margin: 40px auto;
+      align-items: center;
+      flex-direction: column;
+    }
 
-  table {
-    border-collapse: collapse;
-    margin: 40px auto;
-    width: 40%;
-  }
+    #bench {
+      display: none;
+    }
 
-  td,
-  th {
-    border: 1px solid #999;
-    padding: 0.5rem;
-    text-align: left;
-  }
+    .survey__container {
+      flex: 2;
+      margin: 0 auto;
+    }
 
-  th {
-    color: green;
-  }
+    #status {
+      max-width: 80%;
+      margin: auto;
+    }
 
-  #device-info {
-    margin: auto;
-    font-size: 0.8rem;
-  }
+    table {
+      border-collapse: collapse;
+      margin: 40px auto;
+      width: 40%;
+    }
 
-  .advance-log > b,
-  div {
-    font-size: 0.8rem;
-  }
-  .advance-log {
-    display: none;
-  }
-  #winner-instructions {
-    display: none;
-  }
+    td,
+    th {
+      border: 1px solid #999;
+      padding: 0.5rem;
+      text-align: left;
+    }
 
-  #submission-proof {
-    margin: 15px auto;
-  }
+    th {
+      color: green;
+    }
 
-  #submission-proof > div,
-  b {
-    font-size: 1.2rem;
-    font-family: monospace, monospace;
-  }
-</style>
-<script src="<.= &*crate::GLUE .>"></script>
-<. include!("../components/base/bottom.html"); .>
+    #device-info {
+      margin: auto;
+      font-size: 0.8rem;
+    }
+
+    .advance-log > b,
+    div {
+      font-size: 0.8rem;
+    }
+    .advance-log {
+      display: none;
+    }
+    #winner-instructions {
+      display: none;
+    }
+
+    #submission-proof {
+      margin: 15px auto;
+    }
+
+    #submission-proof > div,
+    b {
+      font-size: 1.2rem;
+      font-family: monospace, monospace;
+    }
+  </style>
+
+  <script src="{{ assets.glue }}"></script>
+{% endblock body %}
