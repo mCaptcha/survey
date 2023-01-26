@@ -51,6 +51,12 @@ release: frontend ## Release build
 run: default ## Run debug build
 	cargo run
 
+sqlx-offline-data: ## prepare sqlx offline data
+	cargo sqlx prepare  \
+		--database-url=${DATABASE_URL} -- \
+		--all-features \
+		--bin survey
+
 test: frontend ## Run tests
 	echo 'static/' && tree static || true
 	echo 'tree/' && tree assets || true
