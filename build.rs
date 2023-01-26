@@ -28,8 +28,13 @@ fn main() {
     let git_hash = String::from_utf8(output.stdout).unwrap();
     println!("cargo:rustc-env=GIT_HASH={}", git_hash);
 
-    let now = OffsetDateTime::now_utc().format("%y-%m-%d");
-    println!("cargo:rustc-env=COMPILED_DATE={}", &now);
+    let now = OffsetDateTime::now_utc();
+    println!(
+        "cargo:rustc-env=COMPILED_DATE={}-{}-{}",
+        now.year(),
+        now.month(),
+        now.day()
+    );
 
     cache_bust();
 }
