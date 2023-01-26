@@ -361,7 +361,30 @@ pub fn services(cfg: &mut web::ServiceConfig) {
     cfg.service(add);
     cfg.service(delete);
     cfg.service(list_campaign);
-    //cfg.service(get_feedback);
+    cfg.service(get_campaign_resutls);
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct ResultsPage {
+    pub page: Option<usize>,
+}
+
+#[actix_web_codegen_const_routes::get(
+    path = "crate::V1_API_ROUTES.admin.campaign.results",
+    wrap = "get_admin_check_login()"
+)]
+pub async fn get_campaign_resutls(
+    id: Identity,
+    query: web::Query<ResultsPage>,
+    path: web::Path<Uuid>,
+    data: AppData,
+) -> ServiceResult<impl Responder> {
+    let username = id.identity().unwrap();
+    let page = query.page.unwrap_or(0);
+
+    let results = runners::get_results(&username, &path, &data, page, 50).await?;
+
+    Ok(HttpResponse::Ok().json(results))
 }
 
 #[actix_web_codegen_const_routes::post(path = "crate::V1_API_ROUTES.admin.campaign.add")]
@@ -440,6 +463,7 @@ mod tests {
         let cookies = get_cookie!(signin_resp);
         let survey = get_survey_user(data.clone()).await;
         let survey_cookie = get_cookie!(survey);
+        let app = get_app!(data).await;
 
         let campaign = create_new_campaign(NAME, data.clone(), cookies.clone()).await;
         let campaign_config =
@@ -482,6 +506,18 @@ mod tests {
             DEVICE_SOFTWARE_RECOGNISED
         );
         assert_eq!(responses[0].device_user_provided, DEVICE_USER_PROVIDED);
+
+        let results_resp = get_request!(
+            &app,
+            &V1_API_ROUTES
+                .admin
+                .campaign
+                .get_results_route(&campaign.campaign_id),
+            cookies.clone()
+        );
+        assert_eq!(results_resp.status(), StatusCode::OK);
+        let res: Vec<super::SurveyResponse> = test::read_body_json(results_resp).await;
+        assert_eq!(responses, res);
 
         bad_post_req_test_witout_payload(
             NAME,
