@@ -23,6 +23,7 @@ use sqlx::types::time::OffsetDateTime;
 use uuid::Uuid;
 
 use super::{get_admin_check_login, get_uuid};
+use crate::api::v1::bench::Bench;
 use crate::errors::*;
 use crate::AppData;
 
@@ -35,6 +36,7 @@ pub mod routes {
         pub delete: &'static str,
         //    pub get_feedback: &'static str,
         pub list: &'static str,
+        pub results: &'static str,
     }
 
     impl Campaign {
@@ -43,8 +45,14 @@ pub mod routes {
             let delete = "/admin/api/v1/campaign/{uuid}/delete";
             //            let get_feedback = "/api/v1/campaign/{uuid}/feedback";
             let list = "/admin/api/v1/campaign/list";
+            let results = "/admin/api/v1/campaign/{uuid}/results";
 
-            Campaign { add, delete, list }
+            Campaign {
+                add,
+                delete,
+                list,
+                results,
+            }
         }
         //        pub fn get_benches_route(&self, campaign_id: &str) -> String {
         //            self.get_feedback.replace("{uuid}", &campaign_id)
@@ -53,10 +61,18 @@ pub mod routes {
         pub fn get_delete_route(&self, campaign_id: &str) -> String {
             self.delete.replace("{uuid}", campaign_id)
         }
+
+        pub fn get_results_route(&self, campaign_id: &str) -> String {
+            self.results.replace("{uuid}", campaign_id)
+        }
     }
 }
 
 pub mod runners {
+    use futures::try_join;
+
+    use crate::api::v1::bench::Bench;
+
     use super::*;
 
     pub async fn add_runner(
@@ -144,86 +160,111 @@ pub mod runners {
         Ok(list_resp)
     }
 
-    //    pub async fn get_benches(
-    //        username: &str,
-    //        uuid: &str,
-    //        data: &AppData,
-    //    ) -> ServiceResult<GetFeedbackResp> {
-    //        let uuid = Uuid::parse_str(uuid).map_err(|_| ServiceError::NotAnId)?;
-    //
-    //        struct FeedbackInternal {
-    //            time: OffsetDateTime,
-    //            description: String,
-    //            helpful: bool,
-    //        }
-    //
-    //        struct Name {
-    //            name: String,
-    //        }
-    //
-    //        let name_fut = sqlx::query_as!(
-    //            Name,
-    //            "SELECT name
-    //            FROM survey_campaigns
-    //            WHERE uuid = $1
-    //            AND
-    //                user_id = (
-    //                    SELECT
-    //                        ID
-    //                   FROM
-    //                        kaizen_users
-    //                    WHERE
-    //                        name = $2
-    //                )
-    //           ",
-    //            uuid,
-    //            username
-    //        )
-    //        .fetch_one(&data.db); //.await?;
-    //
-    //        let feedback_fut = sqlx::query_as!(
-    //            FeedbackInternal,
-    //            "SELECT
-    //            time, description, helpful
-    //        FROM
-    //            kaizen_feedbacks
-    //        WHERE campaign_id = (
-    //            SELECT uuid
-    //            FROM
-    //                survey_campaigns
-    //            WHERE
-    //                uuid = $1
-    //            AND
-    //                user_id = (
-    //                    SELECT
-    //                        ID
-    //                    FROM
-    //                        kaizen_users
-    //                    WHERE
-    //                        name = $2
-    //                )
-    //           )",
-    //            uuid,
-    //            username
-    //        )
-    //        .fetch_all(&data.db);
-    //        let (name, mut feedbacks) = try_join!(name_fut, feedback_fut)?;
-    //        //.await?;
-    //
-    //        let mut feedback_resp = Vec::with_capacity(feedbacks.len());
-    //        feedbacks.drain(0..).for_each(|f| {
-    //            feedback_resp.push(Feedback {
-    //                time: f.time.unix_timestamp() as u64,
-    //                description: f.description,
-    //                helpful: f.helpful,
-    //            });
-    //        });
-    //
-    //        Ok(GetFeedbackResp {
-    //            feedbacks: feedback_resp,
-    //            name: name.name,
-    //        })
-    //    }
+    #[derive(Debug)]
+    struct InternalSurveyResp {
+        id: i32,
+        user_id: Uuid,
+        threads: Option<i32>,
+        device_user_provided: String,
+        device_software_recognised: String,
+    }
+
+    #[derive(Debug)]
+    struct InnerU {
+        created_at: OffsetDateTime,
+        id: Uuid,
+    }
+
+    impl From<InnerU> for SurveyUser {
+        fn from(u: InnerU) -> Self {
+            Self {
+                id: u.id,
+                created_at: u.created_at.unix_timestamp(),
+            }
+        }
+    }
+
+    pub async fn get_results(
+        username: &str,
+        uuid: &Uuid,
+        data: &AppData,
+        page: usize,
+        limit: usize,
+    ) -> ServiceResult<Vec<SurveyResponse>> {
+        //        let uuid = Uuid::parse_str(uuid).map_err(|_| ServiceError::NotAnId)?;
+
+        let mut db_responses = sqlx::query_as!(
+            InternalSurveyResp,
+            "SELECT
+                ID,
+                device_software_recognised,
+                threads,
+                user_id,
+                device_user_provided
+            FROM
+                survey_responses
+            WHERE
+                campaign_id = (
+                    SELECT ID FROM survey_campaigns
+                    WHERE
+                        ID = $1
+                    AND
+                        user_id = (SELECT ID FROM survey_admins WHERE name = $2)
+                )
+            LIMIT $3 OFFSET $4
+           ",
+            uuid,
+            username,
+            limit as i32,
+            page as i32,
+        )
+        .fetch_all(&data.db)
+        .await?;
+
+        let mut responses = Vec::with_capacity(db_responses.len());
+        println!("responses {:?}", db_responses);
+        for r in db_responses.drain(0..) {
+            let benches_fut = sqlx::query_as!(
+                Bench,
+                "SELECT
+                    duration,
+                    difficulty
+                FROM
+                    survey_benches
+                WHERE
+                    resp_id = $1
+               ",
+                r.id,
+            )
+            .fetch_all(&data.db);
+
+            let user_fut = sqlx::query_as!(
+                InnerU,
+                "SELECT
+                    created_at,
+                    ID
+                FROM
+                    survey_users
+                WHERE
+                    ID = $1
+               ",
+                r.user_id,
+            )
+            .fetch_one(&data.db);
+
+            let (benches, user) = try_join!(benches_fut, user_fut)?;
+            let user = user.into();
+            responses.push(SurveyResponse {
+                benches,
+                user,
+                device_user_provided: r.device_user_provided,
+                device_software_recognised: r.device_software_recognised,
+                id: r.id as usize,
+                threads: r.threads.map(|t| t as usize),
+            })
+        }
+        Ok(responses)
+    }
 
     pub async fn delete(
         uuid: &Uuid,
@@ -236,11 +277,11 @@ pub mod runners {
          WHERE 
              user_id = (
                  SELECT 
-                         ID 
+                     ID 
                  FROM 
-                         survey_admins 
+                     survey_admins 
                  WHERE 
-                         name = $1
+                     name = $1
              )
          AND
             id = ($2)",
@@ -269,35 +310,23 @@ pub async fn delete(
     Ok(HttpResponse::Ok())
 }
 
-//#[derive(Serialize, Deserialize)]
-//pub struct Feedback {
-//    pub time: u64,
-//    pub description: String,
-//    pub helpful: bool,
-//}
-//
-//#[derive(Serialize, Deserialize)]
-//pub struct GetFeedbackResp {
-//    pub name: String,
-//    pub feedbacks: Vec<Feedback>,
-//}
-//
-//#[actix_web_codegen_const_routes::post(
-//    path = "crate::V1_API_ROUTES.campaign.get_feedback",
-//    wrap = "crate::CheckLogin"
-//)]
-//pub async fn get_feedback(
-//    id: Identity,
-//    data: AppData,
-//    path: web::Path<String>,
-//) -> ServiceResult<impl Responder> {
-//    let username = id.identity().unwrap();
-//    let path = path.into_inner();
-//    let feedback_resp = runners::get_feedback(&username, &path, &data).await?;
-//    Ok(HttpResponse::Ok().json(feedback_resp))
-//}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SurveyResponse {
+    pub user: SurveyUser,
+    pub device_user_provided: String,
+    pub device_software_recognised: String,
+    pub id: usize,
+    pub threads: Option<usize>,
+    pub benches: Vec<Bench>,
+}
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SurveyUser {
+    pub created_at: i64, // OffsetDateTime,
+    pub id: Uuid,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ListCampaignResp {
     pub name: String,
     pub uuid: String,
@@ -317,13 +346,13 @@ pub async fn list_campaign(
     Ok(HttpResponse::Ok().json(list_resp))
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AddCapmaign {
     pub name: String,
     pub difficulties: Vec<i32>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AddCapmaignResp {
     pub campaign_id: String,
 }
@@ -430,6 +459,29 @@ mod tests {
 
         let list = list_campaings(data.clone(), cookies.clone()).await;
         assert!(list.iter().any(|c| c.name == NAME));
+
+        let responses = super::runners::get_results(
+            NAME,
+            &uuid::Uuid::parse_str(&campaign.campaign_id).unwrap(),
+            &AppData::new(data.clone()),
+            0,
+            50,
+        )
+        .await
+        .unwrap();
+        assert_eq!(responses.len(), 1);
+        assert_eq!(responses[0].threads, Some(THREADS as usize));
+        let mut l = responses[0].benches.clone();
+        l.sort_by(|a, b| a.difficulty.cmp(&b.difficulty));
+        let mut r = BENCHES.clone();
+        r.sort_by(|a, b| a.difficulty.cmp(&b.difficulty));
+
+        assert_eq!(l, r);
+        assert_eq!(
+            responses[0].device_software_recognised,
+            DEVICE_SOFTWARE_RECOGNISED
+        );
+        assert_eq!(responses[0].device_user_provided, DEVICE_USER_PROVIDED);
 
         bad_post_req_test_witout_payload(
             NAME,

@@ -157,13 +157,13 @@ async fn register(
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Bench {
     pub duration: f32,
     pub difficulty: i32,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Submission {
     pub device_user_provided: String,
     pub device_software_recognised: String,
@@ -171,7 +171,7 @@ pub struct Submission {
     pub benches: Vec<Bench>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SubmissionProof {
     pub token: String,
     pub proof: String,
@@ -304,7 +304,7 @@ async fn submit(
     Ok(HttpResponse::Ok().json(resp))
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BenchConfig {
     pub difficulties: Vec<i32>,
 }
