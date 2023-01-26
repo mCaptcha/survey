@@ -191,8 +191,6 @@ pub mod runners {
         page: usize,
         limit: usize,
     ) -> ServiceResult<Vec<SurveyResponse>> {
-        //        let uuid = Uuid::parse_str(uuid).map_err(|_| ServiceError::NotAnId)?;
-
         let mut db_responses = sqlx::query_as!(
             InternalSurveyResp,
             "SELECT
@@ -222,7 +220,6 @@ pub mod runners {
         .await?;
 
         let mut responses = Vec::with_capacity(db_responses.len());
-        println!("responses {:?}", db_responses);
         for r in db_responses.drain(0..) {
             let benches_fut = sqlx::query_as!(
                 Bench,
@@ -366,7 +363,13 @@ pub fn services(cfg: &mut web::ServiceConfig) {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct ResultsPage {
-    pub page: Option<usize>,
+    page: Option<usize>,
+}
+
+impl ResultsPage {
+    pub fn page(&self) -> usize {
+        self.page.unwrap_or(0)
+    }
 }
 
 #[actix_web_codegen_const_routes::get(
@@ -380,7 +383,7 @@ pub async fn get_campaign_resutls(
     data: AppData,
 ) -> ServiceResult<impl Responder> {
     let username = id.identity().unwrap();
-    let page = query.page.unwrap_or(0);
+    let page = query.page();
 
     let results = runners::get_results(&username, &path, &data, page, 50).await?;
 
