@@ -96,7 +96,6 @@ export const index = () => {
       element.appendChild(proof);
       element.appendChild(proofText);
       document.getElementById("submission-proof").appendChild(element);
-      document.getElementById("winner-instructions").style.display = "block";
     }
   };
 
