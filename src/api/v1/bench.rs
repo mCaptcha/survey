@@ -215,43 +215,29 @@ async fn submit(
     let user_id = Uuid::from_str(&username).unwrap();
     let payload = payload.into_inner();
 
-    sqlx::query!(
+    struct ID {
+        id: i32,
+    }
+    let resp_id = sqlx::query_as!(
+        ID,
         "INSERT INTO survey_responses (
                         user_id, 
                         campaign_id,
                         device_user_provided,
                         device_software_recognised,
                         threads
-                    ) VALUES ($1, $2, $3, $4, $5);",
+                    ) VALUES ($1, $2, $3, $4, $5)
+        RETURNING ID;",
         &user_id,
         &campaign_id,
         &payload.device_user_provided,
         &payload.device_software_recognised,
         &payload.threads
     )
-    .execute(&data.db)
-    .await?;
-
-    struct ID {
-        id: i32,
-    }
-
-    let resp_id = sqlx::query_as!(
-        ID,
-        "SELECT ID 
-         FROM survey_responses 
-         WHERE 
-             user_id = $1 
-         AND 
-             device_software_recognised = $2;",
-        &user_id,
-        &payload.device_software_recognised
-    )
     .fetch_one(&data.db)
     .await?;
 
     let mut futs = Vec::with_capacity(payload.benches.len());
-
     for bench in payload.benches.iter() {
         let fut = sqlx::query!(
             "INSERT INTO survey_benches 
@@ -261,8 +247,7 @@ async fn submit(
             &bench.difficulty,
             bench.duration
         )
-        .execute(&data.db);
-
+        .execute(&data.db); //.await?;
         futs.push(fut);
     }
 
