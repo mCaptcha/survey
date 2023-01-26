@@ -79,6 +79,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Campaign doesn't exist")]
     CampaignDoesntExist,
+
+    #[display(fmt = "Not a number: only numeral data is accepted")]
+    NotANumber,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -123,6 +126,7 @@ impl ResponseError for ServiceError {
             ServiceError::PasswordsDontMatch => StatusCode::BAD_REQUEST,
 
             ServiceError::CampaignDoesntExist => StatusCode::NOT_FOUND,
+            ServiceError::NotANumber => StatusCode::BAD_REQUEST,
         }
     }
 }

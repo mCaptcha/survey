@@ -23,6 +23,7 @@ use actix_web::{web, HttpResponse, Responder};
 use tera::Context;
 
 use crate::api::v1::admin::campaigns::{runners, AddCapmaign};
+use crate::errors::*;
 use crate::AppData;
 
 pub use super::*;
@@ -60,23 +61,46 @@ impl NewCampaign {
     path = "PAGES.panel.campaigns.new",
     wrap = "crate::pages::get_page_check_login()"
 )]
+#[tracing::instrument(name = "New campaign form", skip(data))]
 pub async fn new_campaign(data: AppData) -> PageResult<impl Responder, NewCampaign> {
     let new_campaign = NewCampaign::new(&data.settings).render();
     let html = ContentType::html();
     Ok(HttpResponse::Ok().content_type(html).body(new_campaign))
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FormAddCampaign {
+    pub name: String,
+    pub difficulties: String,
+}
+
+impl FormAddCampaign {
+    fn parse(self) -> ServiceResult<AddCapmaign> {
+        let name = self.name;
+        let mut difficulties = Vec::new();
+        for d in self.difficulties.split(',') {
+            let d = d.parse::<i32>().map_err(|_| ServiceError::NotANumber)?;
+            difficulties.push(d);
+        }
+        Ok(AddCapmaign { name, difficulties })
+    }
+}
+
 #[actix_web_codegen_const_routes::post(
     path = "PAGES.panel.campaigns.new",
     wrap = "crate::pages::get_page_check_login()"
 )]
+#[tracing::instrument(name = "New campaign form submit", skip(data, id))]
 pub async fn new_campaign_submit(
     id: Identity,
-    payload: web::Json<AddCapmaign>,
+    payload: web::Form<FormAddCampaign>,
     data: AppData,
 ) -> PageResult<impl Responder, NewCampaign> {
     let username = id.identity().unwrap();
-    let mut payload = payload.into_inner();
+    let mut payload = payload
+        .into_inner()
+        .parse()
+        .map_err(|e| PageError::new(NewCampaign::new(&data.settings), e))?;
 
     runners::add_runner(&username, &mut payload, &data)
         .await
@@ -117,14 +141,23 @@ mod tests {
         let (_, _, signin_resp) = register_and_signin(NAME, EMAIL, PASSWORD).await;
         let cookies = get_cookie!(signin_resp);
 
-        let new = AddCapmaign {
+        let mut difficulties = String::new();
+        for d in DIFFICULTIES.iter() {
+            if difficulties.is_empty() {
+                difficulties = format!("{d}");
+            } else {
+                difficulties = format!("{difficulties},{d}");
+            }
+        }
+        println!("{difficulties}");
+        let new = super::FormAddCampaign {
             name: CAMPAIGN_NAME.into(),
-            difficulties: DIFFICULTIES.into(),
+            difficulties,
         };
 
         let new_resp = test::call_service(
             &app,
-            post_request!(&new, crate::PAGES.panel.campaigns.new)
+            post_request!(&new, crate::PAGES.panel.campaigns.new, FORM)
                 .cookie(cookies)
                 .to_request(),
         )

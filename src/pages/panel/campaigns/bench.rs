@@ -30,7 +30,7 @@ pub struct Bench {
     ctx: RefCell<Context>,
 }
 
-pub const BENCH: TemplateFile = TemplateFile::new("new_campaign", "bench/index.html");
+pub const BENCH: TemplateFile = TemplateFile::new("new_bench", "bench/index.html");
 
 impl CtxError for Bench {
     fn with_error(&self, e: &ReadableError) -> String {
