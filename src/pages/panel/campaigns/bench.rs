@@ -41,7 +41,7 @@ impl CtxError for Bench {
 
 impl Bench {
     pub fn new(settings: &Settings) -> Self {
-        let ctx = RefCell::new(context(settings, "Login"));
+        let ctx = RefCell::new(context(settings, "Benchmark"));
         Self { ctx }
     }
 
