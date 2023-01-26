@@ -6,8 +6,9 @@
       <table class="campaign__table">
       <thead class="campaign__heading">
         <tr>
+          <th class="campaign__title-text">ID</th>
           <th class="campaign__title-text">Name</th>
-          <th class="campaign__title-text">UUID</th>
+          <th class="campaign__title-text">Results</th>
         </tr>
       </thead>
       <tbody class="campaign__body">
@@ -21,6 +22,12 @@
             <td>
               <a href="{{ campaign.route }}">
                 <p class="campaign__item-text">{{ campaign.uuid }}</p></a
+              >
+            </td>
+
+            <td>
+              <a href="{{ campaign.results }}">
+                <p class="campaign__item-text">Click Here</p></a
               >
             </td>
           </tr>

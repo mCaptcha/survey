@@ -43,7 +43,7 @@ impl CtxError for Intro {
 
 impl Intro {
     pub fn new(settings: &Settings, payload: Option<&str>) -> Self {
-        let ctx = RefCell::new(context(settings, "Login"));
+        let ctx = RefCell::new(context(settings, "Campaign Homepage"));
         if let Some(uuid) = payload {
             let payload = crate::PAGES.panel.campaigns.get_bench_route(uuid);
             ctx.borrow_mut().insert(PAYLOAD_KEY, &payload);
