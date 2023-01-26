@@ -35,3 +35,9 @@ export type SubmissionProof = {
 export type BenchConfig = {
   difficulties: Array<number>;
 };
+
+export type PoWConfig = {
+  string: string;
+  difficulty_factor: number;
+  salt: string;
+};
