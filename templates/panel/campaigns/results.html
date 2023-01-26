@@ -1,0 +1,53 @@
+{% extends 'base' %} 
+
+{% block nav %}
+  {% include "panel_nav" %}
+{% endblock nav %}
+
+{% block body %}
+  <body class="panel__body">
+    <main class="panel__container">
+      <table>
+        <thead>
+          <tr>
+            <th>Submission ID</th>
+            <th>User ID</th>
+            <th>Device make (user provided)</th>
+            <th>Device make (detected)</th>
+            <th>Threads</th>
+            <th>Benches</th>
+          </tr>
+        </thead>
+      <tbody>
+      {% for sub in payload.submissions %}
+        <tr>
+            <th>{{ sub.id }}</th>
+            <th>{{ sub.user.id }}</th>
+            <th>{{ sub.device_user_provided }}</th>
+            <th>{{ sub.device_software_recognised }}</th>
+            <th>{{ sub.threads }}</th>
+            <th>
+              <table>
+                <thead>
+                  <th>Difficulty</th>
+                  <th>Duration</th>
+                </thead>
+                <tbody>
+                  {% for b in sub.benches %}
+                    <tr>
+                      <td> {{ b.difficulty }} </td>
+                      <td> {{ b.duration }} </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+            </th>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+	<a href="{{payload.next_page}}">Next ></a>
+    </main>
+  </body>
+{% endblock body %}

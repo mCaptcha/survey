@@ -32,6 +32,7 @@ pub mod about;
 pub mod bench;
 pub mod delete;
 pub mod new;
+pub mod results;
 
 pub use super::{context, Footer, TemplateFile, PAGES, PAYLOAD_KEY, TEMPLATES};
 
@@ -43,6 +44,7 @@ pub fn register_templates(t: &mut tera::Tera) {
         new::NEW_CAMPAIGN_FORM,
         bench::BENCH,
         delete::SUDO_DELETE,
+        results::CAMPAIGN_RESULTS,
     ]
     .iter()
     {
@@ -60,6 +62,7 @@ pub mod routes {
         pub about: &'static str,
         pub bench: &'static str,
         pub delete: &'static str,
+        pub results: &'static str,
     }
     impl Campaigns {
         pub const fn new() -> Campaigns {
@@ -69,6 +72,7 @@ pub mod routes {
                 about: "/survey/campaigns/{uuid}/about",
                 bench: "/survey/campaigns/{uuid}/bench",
                 delete: "/admin/campaigns/{uuid}/delete",
+                results: "/admin/campaigns/{uuid}/results",
             }
         }
 
@@ -84,6 +88,18 @@ pub mod routes {
             self.about.replace("{uuid}", campaign_id)
         }
 
+        pub fn get_results_route(
+            &self,
+            campaign_id: &str,
+            page: Option<usize>,
+        ) -> String {
+            let mut res = self.results.replace("{uuid}", campaign_id);
+            if let Some(page) = page {
+                res = format!("{res}?page={page}");
+            }
+            res
+        }
+
         pub const fn get_sitemap() -> [&'static str; 2] {
             const CAMPAIGNS: Campaigns = Campaigns::new();
             [CAMPAIGNS.home, CAMPAIGNS.new]
@@ -97,6 +113,7 @@ pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     new::services(cfg);
     bench::services(cfg);
     delete::services(cfg);
+    results::services(cfg);
 }
 
 pub use super::*;
@@ -113,14 +130,24 @@ pub struct TemplateCampaign {
     pub name: String,
     pub uuid: String,
     pub route: String,
+    pub results: String,
 }
 
 impl From<ListCampaignResp> for TemplateCampaign {
     fn from(c: ListCampaignResp) -> Self {
         let route = crate::PAGES.panel.campaigns.get_about_route(&c.uuid);
+        let results = crate::PAGES
+            .panel
+            .campaigns
+            .get_results_route(&c.uuid, None);
         let uuid = c.uuid;
         let name = c.name;
-        Self { route, name, uuid }
+        Self {
+            route,
+            name,
+            uuid,
+            results,
+        }
     }
 }
 
