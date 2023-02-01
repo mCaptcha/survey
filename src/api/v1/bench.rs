@@ -169,6 +169,28 @@ pub struct Submission {
     pub device_software_recognised: String,
     pub threads: i32,
     pub benches: Vec<Bench>,
+    pub submission_type: SubmissionType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum SubmissionType {
+    Wasm,
+    Js,
+}
+
+impl ToString for SubmissionType {
+    fn to_string(&self) -> String {
+        let s = serde_json::to_string(&self).unwrap();
+        (&s[1..(s.len() - 1)]).to_string()
+    }
+}
+
+impl FromStr for SubmissionType {
+    type Err = serde_json::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_str(&format!("\"{}\"", s))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -177,12 +199,11 @@ pub struct SubmissionProof {
     pub proof: String,
 }
 
-fn is_session_authenticated(r: &HttpRequest, mut pl: &mut Payload) -> bool {
+fn is_session_authenticated(r: &HttpRequest, pl: &mut Payload) -> bool {
     use actix_web::FromRequest;
     matches!(
         Session::from_request(r, pl).into_inner().map(|x| {
             let val = x.get::<String>(SURVEY_USER_ID);
-            println!("{:#?}", val);
             val
         }),
         Ok(Ok(Some(_)))
@@ -222,20 +243,25 @@ async fn submit(
     let resp_id = sqlx::query_as!(
         ID,
         "INSERT INTO survey_responses (
-                        user_id, 
-                        campaign_id,
-                        device_user_provided,
-                        device_software_recognised,
-                        threads,
-                        submitted_at
-                    ) VALUES ($1, $2, $3, $4, $5, $6)
+                    user_id,
+                    campaign_id,
+                    device_user_provided,
+                    device_software_recognised,
+                    threads,
+                    submitted_at,
+                    submission_bench_type_id
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6,
+                    (SELECT ID FROM survey_bench_type WHERE name = $7)
+                )
         RETURNING ID;",
         &user_id,
         &campaign_id,
         &payload.device_user_provided,
         &payload.device_software_recognised,
         &payload.threads,
-        &now
+        &now,
+        &payload.submission_type.to_string(),
     )
     .fetch_one(&data.db)
     .await?;
@@ -313,4 +339,15 @@ async fn fetch(data: AppData, path: web::Path<String>) -> ServiceResult<impl Res
     .fetch_one(&data.db)
     .await?;
     Ok(HttpResponse::Ok().json(config))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn survey_response_type_no_panic_test() {
+        assert_eq!(SubmissionType::Wasm.to_string(), "wasm".to_string());
+        assert_eq!(SubmissionType::Js.to_string(), "js".to_string());
+    }
 }

@@ -32,7 +32,7 @@ onmessage = async (event) => {
     salt: SALT,
   };
 
-  let duration = await prove(config);
+  const duration = await prove(config);
 
   const msg: Bench = {
     difficulty: difficulty_factor,

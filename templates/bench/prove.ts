@@ -10,7 +10,18 @@
  */
 
 import * as p from "@mcaptcha/pow_sha256-polyfill";
-import { PoWConfig } from "./types";
+import { PoWConfig, SubmissionType } from "./types";
+
+export const get_bench_type = async (): Promise<SubmissionType> => {
+  console.log(`Wasm support says ${WasmSupported}`);
+  let submission_type: SubmissionType;
+  if (WasmSupported) {
+    submission_type = SubmissionType.wasm;
+  } else {
+    submission_type = SubmissionType.js;
+  }
+  return submission_type;
+};
 
 /**
  * proove work
@@ -21,8 +32,9 @@ const prove = async (config: PoWConfig): Promise<number> => {
   console.log(`Wasm support says ${WasmSupported}`);
   let duration: number;
   if (WasmSupported) {
-    const wasm = require("@mcaptcha/pow-wasm");
+    const wasm = await require("@mcaptcha/pow-wasm");
     const t0 = performance.now();
+    console.log(JSON.stringify(wasm))
     wasm.gen_pow(config.salt, config.string, config.difficulty_factor);
     const t1 = performance.now();
     duration = t1 - t0;
