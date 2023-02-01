@@ -163,6 +163,7 @@ pub mod runners {
     #[derive(Debug)]
     struct InternalSurveyResp {
         id: i32,
+        submitted_at: OffsetDateTime,
         user_id: Uuid,
         threads: Option<i32>,
         device_user_provided: String,
@@ -198,6 +199,7 @@ pub mod runners {
                 device_software_recognised,
                 threads,
                 user_id,
+                submitted_at,
                 device_user_provided
             FROM
                 survey_responses
@@ -256,6 +258,7 @@ pub mod runners {
                 user,
                 device_user_provided: r.device_user_provided,
                 device_software_recognised: r.device_software_recognised,
+                submitted_at: r.submitted_at.unix_timestamp(),
                 id: r.id as usize,
                 threads: r.threads.map(|t| t as usize),
             })
@@ -314,6 +317,7 @@ pub struct SurveyResponse {
     pub device_software_recognised: String,
     pub id: usize,
     pub threads: Option<usize>,
+    pub submitted_at: i64,
     pub benches: Vec<Bench>,
 }
 

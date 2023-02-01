@@ -11,6 +11,7 @@
         <thead>
           <tr>
             <th>Submission ID</th>
+            <th>Time (UTC)</th>
             <th>User ID</th>
             <th>Device make (user provided)</th>
             <th>Device make (detected)</th>
@@ -21,12 +22,13 @@
       <tbody>
       {% for sub in payload.submissions %}
         <tr>
-            <th>{{ sub.id }}</th>
-            <th>{{ sub.user.id }}</th>
-            <th>{{ sub.device_user_provided }}</th>
-            <th>{{ sub.device_software_recognised }}</th>
-            <th>{{ sub.threads }}</th>
-            <th>
+            <td>{{ sub.id }}</td>
+            <td>{{ sub.submitted_at |  date(format="%Y-%m-%d %H:%M", timezone="GMT") }}</td>
+            <td>{{ sub.user.id }}</td>
+            <td>{{ sub.device_user_provided }}</td>
+            <td>{{ sub.device_software_recognised }}</td>
+            <td>{{ sub.threads }}</td>
+            <td>
               <table>
                 <thead>
                   <th>Difficulty</th>
