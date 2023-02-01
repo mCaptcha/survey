@@ -214,6 +214,7 @@ async fn submit(
 
     let user_id = Uuid::from_str(&username).unwrap();
     let payload = payload.into_inner();
+    let now = OffsetDateTime::now_utc();
 
     struct ID {
         id: i32,
@@ -225,14 +226,16 @@ async fn submit(
                         campaign_id,
                         device_user_provided,
                         device_software_recognised,
-                        threads
-                    ) VALUES ($1, $2, $3, $4, $5)
+                        threads,
+                        submitted_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING ID;",
         &user_id,
         &campaign_id,
         &payload.device_user_provided,
         &payload.device_software_recognised,
-        &payload.threads
+        &payload.threads,
+        &now
     )
     .fetch_one(&data.db)
     .await?;
