@@ -44,33 +44,88 @@ impl CtxError for CampaignResults {
     }
 }
 
-const RESUTS_LIMIT: usize = 50;
+const RESUTS_LIMIT: usize = 10;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ResultsPagePayload {
     next_page: Option<String>,
     submissions: Vec<SurveyResponse>,
+    pub wasm_only: Option<String>,
+    pub js_only: Option<String>,
+    pub all_benches: Option<String>,
 }
 
 impl ResultsPagePayload {
     pub fn new(
         submissions: Vec<SurveyResponse>,
-        current_page: usize,
         campaign_id: &Uuid,
+        modifier: ResultsPage,
     ) -> Self {
-        let next_page = if submissions.len() >= RESUTS_LIMIT {
+        let campaign_id_str = campaign_id.to_string();
+
+        let all_benches;
+        let wasm_only;
+        let js_only;
+        match modifier.bench_type {
+            Some(SubmissionType::Js) => {
+                all_benches = Some(
+                    crate::PAGES
+                        .panel
+                        .campaigns
+                        .get_results_route(&campaign_id_str, None),
+                );
+
+                wasm_only = Some(crate::PAGES.panel.campaigns.get_results_route(
+                    &campaign_id_str,
+                    Some(ResultsPage::new(None, Some(SubmissionType::Wasm))),
+                ));
+                js_only = None;
+            }
+            Some(SubmissionType::Wasm) => {
+                js_only = Some(crate::PAGES.panel.campaigns.get_results_route(
+                    &campaign_id_str,
+                    Some(ResultsPage::new(None, Some(SubmissionType::Js))),
+                ));
+                all_benches = Some(
+                    crate::PAGES
+                        .panel
+                        .campaigns
+                        .get_results_route(&campaign_id_str, None),
+                );
+                wasm_only = None;
+            }
+            None => {
+                all_benches = None;
+                js_only = Some(crate::PAGES.panel.campaigns.get_results_route(
+                    &campaign_id_str,
+                    Some(ResultsPage::new(None, Some(SubmissionType::Js))),
+                ));
+                wasm_only = Some(crate::PAGES.panel.campaigns.get_results_route(
+                    &campaign_id_str,
+                    Some(ResultsPage::new(None, Some(SubmissionType::Wasm))),
+                ));
+            }
+        }
+
+        let next_page = if submissions.len() == RESUTS_LIMIT {
+            let m = ResultsPage::new(Some(modifier.page() + 1), modifier.bench_type);
+
             Some(
                 PAGES
                     .panel
                     .campaigns
-                    .get_results_route(&campaign_id.to_string(), Some(current_page + 1)),
+                    .get_results_route(&campaign_id_str, Some(m)),
             )
         } else {
             None
         };
+
         Self {
             next_page,
             submissions,
+            js_only,
+            wasm_only,
+            all_benches,
         }
     }
 }
@@ -105,15 +160,22 @@ pub async fn results(
         )),
         Ok(uuid) => {
             let username = id.identity().unwrap();
+            let query = query.into_inner();
             let page = query.page();
 
-            let results =
-                runners::get_results(&username, &uuid, &data, page, RESUTS_LIMIT)
-                    .await
-                    .map_err(|e| {
-                        PageError::new(CampaignResults::new(&data.settings, None), e)
-                    })?;
-            let payload = ResultsPagePayload::new(results, page, &uuid);
+            let results = runners::get_results(
+                &username,
+                &uuid,
+                &data,
+                page,
+                RESUTS_LIMIT,
+                query.bench_type.clone(),
+            )
+            .await
+            .map_err(|e| {
+                PageError::new(CampaignResults::new(&data.settings, None), e)
+            })?;
+            let payload = ResultsPagePayload::new(results, &uuid, query);
 
             let results_page =
                 CampaignResults::new(&data.settings, Some(payload)).render();

@@ -7,6 +7,20 @@
 {% block body %}
   <body class="panel__body">
     <main class="panel__container">
+      <ul>
+        <h2>Filters</h2>
+        {% if payload.js_only %}
+          <ol><a href="{{ payload.js_only }}">JavaScript polyfil only</a></ol>
+        {% endif %}
+
+        {% if payload.wasm_only %}
+          <ol><a href="{{ payload.wasm_only }}">WASM only</a></ol>
+        {% endif %}
+
+        {% if payload.all_benches %}
+          <ol><a href="{{ payload.all_benches }}">All Benchmarks</a></ol>
+        {% endif %}
+      </ul>
       <table>
         <thead>
           <tr>

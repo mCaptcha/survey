@@ -21,9 +21,11 @@ use actix_web::{HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use tera::Context;
 
+use crate::api::v1::admin::campaigns::ResultsPage;
 use crate::api::v1::admin::campaigns::{
     runners::list_campaign_runner, ListCampaignResp,
 };
+use crate::api::v1::bench::SubmissionType;
 use crate::pages::errors::*;
 use crate::AppData;
 use crate::Settings;
@@ -55,6 +57,8 @@ pub fn register_templates(t: &mut tera::Tera) {
 pub mod routes {
     use serde::{Deserialize, Serialize};
 
+    use crate::api::v1::admin::campaigns::ResultsPage;
+
     #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Campaigns {
         pub home: &'static str,
@@ -64,6 +68,7 @@ pub mod routes {
         pub delete: &'static str,
         pub results: &'static str,
     }
+
     impl Campaigns {
         pub const fn new() -> Campaigns {
             Campaigns {
@@ -91,11 +96,22 @@ pub mod routes {
         pub fn get_results_route(
             &self,
             campaign_id: &str,
-            page: Option<usize>,
+            modifier: Option<ResultsPage>,
         ) -> String {
             let mut res = self.results.replace("{uuid}", campaign_id);
-            if let Some(page) = page {
-                res = format!("{res}?page={page}");
+            if let Some(modifier) = modifier {
+                let page = modifier.page();
+                if page != 0 {
+                    res = format!("{res}?page={page}");
+                }
+
+                if let Some(bench_type) = modifier.bench_type {
+                    if page != 0 {
+                        res = format!("{res}&bench_type={}", bench_type.to_string());
+                    } else {
+                        res = format!("{res}?bench_type={}", bench_type.to_string());
+                    }
+                }
             }
             res
         }
@@ -154,7 +170,6 @@ impl From<ListCampaignResp> for TemplateCampaign {
 impl CtxError for Campaigns {
     fn with_error(&self, e: &ReadableError) -> String {
         self.ctx.borrow_mut().insert(ERROR_KEY, e);
-
         self.render()
     }
 }
