@@ -64,7 +64,9 @@
       {% endfor %}
       </tbody>
     </table>
-	<a href="{{payload.next_page}}">Next ></a>
+	{% if payload.next_page %}
+		<a href="{{payload.next_page}}">Next ></a>
+	{% endif %}
     </main>
   </body>
 {% endblock body %}
