@@ -34,7 +34,6 @@ const prove = async (config: PoWConfig): Promise<number> => {
   if (WasmSupported) {
     const wasm = await require("@mcaptcha/pow-wasm");
     const t0 = performance.now();
-    console.log(JSON.stringify(wasm))
     wasm.gen_pow(config.salt, config.string, config.difficulty_factor);
     const t1 = performance.now();
     duration = t1 - t0;
