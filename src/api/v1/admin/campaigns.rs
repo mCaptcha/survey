@@ -24,6 +24,7 @@ use uuid::Uuid;
 
 use super::{get_admin_check_login, get_uuid};
 use crate::api::v1::bench::Bench;
+use crate::api::v1::bench::SubmissionType;
 use crate::errors::*;
 use crate::AppData;
 
@@ -69,6 +70,8 @@ pub mod routes {
 }
 
 pub mod runners {
+    use std::str::FromStr;
+
     use futures::try_join;
 
     use crate::api::v1::bench::Bench;
@@ -162,12 +165,13 @@ pub mod runners {
 
     #[derive(Debug)]
     struct InternalSurveyResp {
-        id: i32,
-        submitted_at: OffsetDateTime,
-        user_id: Uuid,
+        id: Option<i32>,
+        submitted_at: Option<OffsetDateTime>,
+        user_id: Option<Uuid>,
         threads: Option<i32>,
-        device_user_provided: String,
-        device_software_recognised: String,
+        device_user_provided: Option<String>,
+        device_software_recognised: Option<String>,
+        name: Option<String>,
     }
 
     #[derive(Debug)]
@@ -195,16 +199,19 @@ pub mod runners {
         let mut db_responses = sqlx::query_as!(
             InternalSurveyResp,
             "SELECT
-                ID,
-                device_software_recognised,
-                threads,
-                user_id,
-                submitted_at,
-                device_user_provided
+                survey_responses.ID,
+                survey_responses.device_software_recognised,
+                survey_responses.threads,
+                survey_responses.user_id,
+                survey_responses.submitted_at,
+                survey_responses.device_user_provided,
+                survey_bench_type.name
             FROM
                 survey_responses
+            INNER JOIN  survey_bench_type ON
+                survey_responses.submission_bench_type_id = survey_bench_type.ID
             WHERE
-                campaign_id = (
+                survey_responses.campaign_id = (
                     SELECT ID FROM survey_campaigns
                     WHERE
                         ID = $1
@@ -256,11 +263,13 @@ pub mod runners {
             responses.push(SurveyResponse {
                 benches,
                 user,
-                device_user_provided: r.device_user_provided,
-                device_software_recognised: r.device_software_recognised,
-                submitted_at: r.submitted_at.unix_timestamp(),
-                id: r.id as usize,
-                threads: r.threads.map(|t| t as usize),
+                device_user_provided: r.device_user_provided.unwrap(),
+                device_software_recognised: r.device_software_recognised.unwrap(),
+                submitted_at: r.submitted_at.unwrap().unix_timestamp(),
+                id: r.id.unwrap() as usize,
+                submission_type: SubmissionType::from_str(r.name.as_ref().unwrap())
+                    .unwrap(),
+                threads: Some(r.threads.unwrap() as usize),
             })
         }
         Ok(responses)
@@ -318,6 +327,7 @@ pub struct SurveyResponse {
     pub id: usize,
     pub threads: Option<usize>,
     pub submitted_at: i64,
+    pub submission_type: SubmissionType,
     pub benches: Vec<Bench>,
 }
 
@@ -483,6 +493,7 @@ mod tests {
             device_software_recognised: DEVICE_SOFTWARE_RECOGNISED.into(),
             threads: THREADS,
             benches: BENCHES.clone(),
+            submission_type: api::v1::bench::SubmissionType::Wasm,
         };
 
         let _proof =

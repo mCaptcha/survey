@@ -16,6 +16,7 @@
             <th>Device make (user provided)</th>
             <th>Device make (detected)</th>
             <th>Threads</th>
+            <th>Benchmark Type</th>
             <th>Benches</th>
           </tr>
         </thead>
@@ -28,6 +29,7 @@
             <td>{{ sub.device_user_provided }}</td>
             <td>{{ sub.device_software_recognised }}</td>
             <td>{{ sub.threads }}</td>
+            <td>{{ sub.submission_type }}</td>
             <td>
               <table>
                 <thead>
@@ -43,8 +45,7 @@
                   {% endfor %}
                 </tbody>
               </table>
-
-            </th>
+            </td>
         </tr>
       {% endfor %}
       </tbody>
