@@ -27,6 +27,7 @@ use lazy_static::lazy_static;
 use log::info;
 
 mod api;
+mod archive;
 mod data;
 mod errors;
 mod pages;
@@ -70,7 +71,7 @@ pub type AppData = actix_web::web::Data<Arc<crate::data::Data>>;
 #[cfg(not(tarpaulin_include))]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env::set_var("RUST_LOG", "info");
+    //env::set_var("RUST_LOG", "info");
 
     pretty_env_logger::init();
 
@@ -83,6 +84,9 @@ async fn main() -> std::io::Result<()> {
     let data = Data::new(settings.clone()).await;
     sqlx::migrate!("./migrations/").run(&data.db).await.unwrap();
     let data = actix_web::web::Data::new(data);
+
+    let arch = archive::Archiver::new(&data.settings);
+    arch.archive(&data).await.unwrap();
 
     let ip = settings.server.get_ip();
     println!("Starting server on: http://{}", ip);
