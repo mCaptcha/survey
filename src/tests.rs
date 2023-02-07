@@ -25,6 +25,7 @@ use actix_web::{
     error::ResponseError,
     http::StatusCode,
 };
+use mktemp::Temp;
 
 use lazy_static::lazy_static;
 use serde::Serialize;
@@ -42,6 +43,8 @@ use crate::V1_API_ROUTES;
 
 pub async fn get_test_data() -> Arc<Data> {
     let mut settings = Settings::new().unwrap();
+    let tmp_dir = Temp::new_dir().unwrap();
+    settings.archive.base_path = tmp_dir.join("base_path").to_str().unwrap().into();
     settings.allow_registration = true;
     Data::new(settings).await
 }
