@@ -1,7 +1,7 @@
 debug = true
 allow_registration = true
 source_code = "https://github.com/mcaptcha/survey"
-default_campaign = "b6b261fa-3ef9-4d7f-8852-339b8f81bb01"
+default_campaign = "4e951e01-71ee-4a18-9b97-782965495ae3"
 support_email="support@example.org"
 
 [server]

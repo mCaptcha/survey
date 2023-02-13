@@ -25,6 +25,7 @@ export type Submission = {
   device_software_recognised: String;
   threads: number;
   benches: Array<Bench>;
+  submission_type: SubmissionType;
 };
 
 export type SubmissionProof = {
@@ -35,3 +36,14 @@ export type SubmissionProof = {
 export type BenchConfig = {
   difficulties: Array<number>;
 };
+
+export type PoWConfig = {
+  string: string;
+  difficulty_factor: number;
+  salt: string;
+};
+
+export enum SubmissionType   {
+  wasm = "wasm",
+  js = "js",
+}

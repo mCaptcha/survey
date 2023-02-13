@@ -24,11 +24,14 @@ use uuid::Uuid;
 
 use super::{get_admin_check_login, get_uuid};
 use crate::api::v1::bench::Bench;
+use crate::api::v1::bench::SubmissionType;
 use crate::errors::*;
 use crate::AppData;
 
 pub mod routes {
     use serde::{Deserialize, Serialize};
+
+    use super::ResultsPage;
 
     #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Campaign {
@@ -62,13 +65,33 @@ pub mod routes {
             self.delete.replace("{uuid}", campaign_id)
         }
 
-        pub fn get_results_route(&self, campaign_id: &str) -> String {
-            self.results.replace("{uuid}", campaign_id)
+        pub fn get_results_route(
+            &self,
+            campaign_id: &str,
+            modifier: Option<ResultsPage>,
+        ) -> String {
+            let mut res = self.results.replace("{uuid}", campaign_id);
+            if let Some(modifier) = modifier {
+                if let Some(page) = modifier.page {
+                    res = format!("{res}?page={page}");
+                }
+
+                if let Some(bench_type) = modifier.bench_type {
+                    if modifier.page.is_some() {
+                        res = format!("{res}&bench_type={}", bench_type.to_string());
+                    } else {
+                        res = format!("{res}?bench_type={}", bench_type.to_string());
+                    }
+                }
+            }
+            res
         }
     }
 }
 
 pub mod runners {
+    use std::str::FromStr;
+
     use futures::try_join;
 
     use crate::api::v1::bench::Bench;
@@ -163,10 +186,12 @@ pub mod runners {
     #[derive(Debug)]
     struct InternalSurveyResp {
         id: i32,
+        submitted_at: OffsetDateTime,
         user_id: Uuid,
         threads: Option<i32>,
         device_user_provided: String,
         device_software_recognised: String,
+        name: String,
     }
 
     #[derive(Debug)]
@@ -190,34 +215,98 @@ pub mod runners {
         data: &AppData,
         page: usize,
         limit: usize,
+        filter: Option<SubmissionType>,
     ) -> ServiceResult<Vec<SurveyResponse>> {
-        let mut db_responses = sqlx::query_as!(
-            InternalSurveyResp,
-            "SELECT
-                ID,
-                device_software_recognised,
-                threads,
-                user_id,
-                device_user_provided
+        let mut db_responses = if let Some(filter) = filter {
+            sqlx::query_as!(
+                InternalSurveyResp,
+                "SELECT
+                    survey_responses.ID,
+                    survey_responses.device_software_recognised,
+                    survey_responses.threads,
+                    survey_responses.user_id,
+                    survey_responses.submitted_at,
+                    survey_responses.device_user_provided,
+                    survey_bench_type.name
+                FROM
+                    survey_responses
+                INNER JOIN  survey_bench_type ON
+                    survey_responses.submission_bench_type_id = survey_bench_type.ID
+                WHERE
+                    survey_bench_type.name = $3
+                AND
+                    survey_responses.campaign_id = (
+                        SELECT ID FROM survey_campaigns
+                        WHERE
+                            ID = $1
+                        AND
+                            user_id = (SELECT ID FROM survey_admins WHERE name = $2)
+                    )
+                LIMIT $4 OFFSET $5",
+                uuid,
+                username,
+                filter.to_string(),
+                limit as i32,
+                page as i32,
+            )
+            .fetch_all(&data.db)
+            .await?
+        } else {
+            #[derive(Debug)]
+            struct I {
+                id: Option<i32>,
+                submitted_at: Option<OffsetDateTime>,
+                user_id: Option<Uuid>,
+                threads: Option<i32>,
+                device_user_provided: Option<String>,
+                device_software_recognised: Option<String>,
+                name: Option<String>,
+            }
+            let mut i = sqlx::query_as!(
+                I,
+                "SELECT
+                survey_responses.ID,
+                survey_responses.device_software_recognised,
+                survey_responses.threads,
+                survey_responses.user_id,
+                survey_responses.submitted_at,
+                survey_responses.device_user_provided,
+                survey_bench_type.name
             FROM
                 survey_responses
+            INNER JOIN  survey_bench_type ON
+                survey_responses.submission_bench_type_id = survey_bench_type.ID
             WHERE
-                campaign_id = (
+                survey_responses.campaign_id = (
                     SELECT ID FROM survey_campaigns
                     WHERE
                         ID = $1
                     AND
                         user_id = (SELECT ID FROM survey_admins WHERE name = $2)
                 )
-            LIMIT $3 OFFSET $4
-           ",
-            uuid,
-            username,
-            limit as i32,
-            page as i32,
-        )
-        .fetch_all(&data.db)
-        .await?;
+            LIMIT $3 OFFSET $4",
+                uuid,
+                username,
+                limit as i32,
+                page as i32,
+            )
+            .fetch_all(&data.db)
+            .await?;
+
+            let mut res = Vec::with_capacity(i.len());
+            i.drain(0..).for_each(|x| {
+                res.push(InternalSurveyResp {
+                    id: x.id.unwrap(),
+                    submitted_at: x.submitted_at.unwrap(),
+                    user_id: x.user_id.unwrap(),
+                    threads: x.threads,
+                    device_user_provided: x.device_user_provided.unwrap(),
+                    device_software_recognised: x.device_software_recognised.unwrap(),
+                    name: x.name.unwrap(),
+                })
+            });
+            res
+        };
 
         let mut responses = Vec::with_capacity(db_responses.len());
         for r in db_responses.drain(0..) {
@@ -256,7 +345,9 @@ pub mod runners {
                 user,
                 device_user_provided: r.device_user_provided,
                 device_software_recognised: r.device_software_recognised,
+                submitted_at: r.submitted_at.unix_timestamp(),
                 id: r.id as usize,
+                submission_type: SubmissionType::from_str(&r.name).unwrap(),
                 threads: r.threads.map(|t| t as usize),
             })
         }
@@ -314,6 +405,8 @@ pub struct SurveyResponse {
     pub device_software_recognised: String,
     pub id: usize,
     pub threads: Option<usize>,
+    pub submitted_at: i64,
+    pub submission_type: SubmissionType,
     pub benches: Vec<Bench>,
 }
 
@@ -364,11 +457,16 @@ pub fn services(cfg: &mut web::ServiceConfig) {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct ResultsPage {
     page: Option<usize>,
+    pub bench_type: Option<SubmissionType>,
 }
 
 impl ResultsPage {
     pub fn page(&self) -> usize {
         self.page.unwrap_or(0)
+    }
+
+    pub fn new(page: Option<usize>, bench_type: Option<SubmissionType>) -> Self {
+        Self { page, bench_type }
     }
 }
 
@@ -383,9 +481,12 @@ pub async fn get_campaign_resutls(
     data: AppData,
 ) -> ServiceResult<impl Responder> {
     let username = id.identity().unwrap();
+    let query = query.into_inner();
     let page = query.page();
 
-    let results = runners::get_results(&username, &path, &data, page, 50).await?;
+    let results =
+        runners::get_results(&username, &path, &data, page, 50, query.bench_type)
+            .await?;
 
     Ok(HttpResponse::Ok().json(results))
 }
@@ -408,6 +509,7 @@ async fn add(
 #[cfg(test)]
 mod tests {
     use crate::api::v1::bench::Submission;
+    use crate::api::v1::bench::SubmissionType;
     use crate::errors::*;
     use crate::tests::*;
     use crate::*;
@@ -479,6 +581,7 @@ mod tests {
             device_software_recognised: DEVICE_SOFTWARE_RECOGNISED.into(),
             threads: THREADS,
             benches: BENCHES.clone(),
+            submission_type: SubmissionType::Wasm,
         };
 
         let _proof =
@@ -493,6 +596,7 @@ mod tests {
             &AppData::new(data.clone()),
             0,
             50,
+            None,
         )
         .await
         .unwrap();
@@ -502,6 +606,34 @@ mod tests {
         l.sort_by(|a, b| a.difficulty.cmp(&b.difficulty));
         let mut r = BENCHES.clone();
         r.sort_by(|a, b| a.difficulty.cmp(&b.difficulty));
+
+        assert_eq!(
+            super::runners::get_results(
+                NAME,
+                &uuid::Uuid::parse_str(&campaign.campaign_id).unwrap(),
+                &AppData::new(data.clone()),
+                0,
+                50,
+                Some(SubmissionType::Wasm),
+            )
+            .await
+            .unwrap(),
+            responses
+        );
+
+        assert_eq!(
+            super::runners::get_results(
+                NAME,
+                &uuid::Uuid::parse_str(&campaign.campaign_id).unwrap(),
+                &AppData::new(data.clone()),
+                0,
+                50,
+                Some(SubmissionType::Js),
+            )
+            .await
+            .unwrap(),
+            Vec::default()
+        );
 
         assert_eq!(l, r);
         assert_eq!(
@@ -515,7 +647,7 @@ mod tests {
             &V1_API_ROUTES
                 .admin
                 .campaign
-                .get_results_route(&campaign.campaign_id),
+                .get_results_route(&campaign.campaign_id, None),
             cookies.clone()
         );
         assert_eq!(results_resp.status(), StatusCode::OK);

@@ -7,26 +7,44 @@
 {% block body %}
   <body class="panel__body">
     <main class="panel__container">
+      <ul>
+        <h2>Filters</h2>
+        {% if payload.js_only %}
+          <ol><a href="{{ payload.js_only }}">JavaScript polyfil only</a></ol>
+        {% endif %}
+
+        {% if payload.wasm_only %}
+          <ol><a href="{{ payload.wasm_only }}">WASM only</a></ol>
+        {% endif %}
+
+        {% if payload.all_benches %}
+          <ol><a href="{{ payload.all_benches }}">All Benchmarks</a></ol>
+        {% endif %}
+      </ul>
       <table>
         <thead>
           <tr>
             <th>Submission ID</th>
+            <th>Time (UTC)</th>
             <th>User ID</th>
             <th>Device make (user provided)</th>
             <th>Device make (detected)</th>
             <th>Threads</th>
+            <th>Benchmark Type</th>
             <th>Benches</th>
           </tr>
         </thead>
       <tbody>
       {% for sub in payload.submissions %}
         <tr>
-            <th>{{ sub.id }}</th>
-            <th>{{ sub.user.id }}</th>
-            <th>{{ sub.device_user_provided }}</th>
-            <th>{{ sub.device_software_recognised }}</th>
-            <th>{{ sub.threads }}</th>
-            <th>
+            <td>{{ sub.id }}</td>
+            <td>{{ sub.submitted_at |  date(format="%Y-%m-%d %H:%M", timezone="GMT") }}</td>
+            <td>{{ sub.user.id }}</td>
+            <td>{{ sub.device_user_provided }}</td>
+            <td>{{ sub.device_software_recognised }}</td>
+            <td>{{ sub.threads }}</td>
+            <td>{{ sub.submission_type }}</td>
+            <td>
               <table>
                 <thead>
                   <th>Difficulty</th>
@@ -41,13 +59,14 @@
                   {% endfor %}
                 </tbody>
               </table>
-
-            </th>
+            </td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
-	<a href="{{payload.next_page}}">Next ></a>
+	{% if payload.next_page %}
+		<a href="{{payload.next_page}}">Next ></a>
+	{% endif %}
     </main>
   </body>
 {% endblock body %}

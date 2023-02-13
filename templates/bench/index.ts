@@ -19,6 +19,7 @@ import ROUTES from "../api/v1/routes";
 import genJsonPaylod from "../utils/genJsonPayload";
 import isBlankString from "../utils/isBlankString";
 import createError from "../components/error/";
+import { get_bench_type } from "./prove";
 
 export const index = () => {
   const ADV = <HTMLButtonElement>document.getElementById("advance");
@@ -67,12 +68,13 @@ export const index = () => {
   };
 
   const submitBench = async () => {
+    const submission_type = await get_bench_type();
     const payload: Submission = {
       device_user_provided: deviceName,
       threads: window.navigator.hardwareConcurrency,
       device_software_recognised: window.navigator.userAgent,
-
       benches: res,
+      submission_type,
     };
 
     const resp = await fetch(
@@ -96,7 +98,6 @@ export const index = () => {
       element.appendChild(proof);
       element.appendChild(proofText);
       document.getElementById("submission-proof").appendChild(element);
-      document.getElementById("winner-instructions").style.display = "block";
     }
   };
 

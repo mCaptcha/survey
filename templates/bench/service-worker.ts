@@ -15,35 +15,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { gen_pow } from "@mcaptcha/pow-wasm";
-import { Bench } from "./types";
-
-type PoWConfig = {
-  string: string;
-  difficulty_factor: number;
-  salt: string;
-};
+import { Bench, PoWConfig } from "./types";
+import prove from "./prove";
 
 const SALT = "674243647f1c355da8607a8cdda05120d79ca5d1af8b3b49359d056a0a82";
 const PHRASE = "6e2a53dbc7d307970d7ba3c0000221722cb74f1c325137251ce8fa5c2240";
 
-const config: PoWConfig = {
-  string: PHRASE,
-  difficulty_factor: 1,
-  salt: SALT,
-};
-
 console.debug("worker registered");
 
-onmessage = function (event) {
+onmessage = async (event) => {
   console.debug("message received at worker");
   const difficulty_factor = parseInt(event.data);
-  config.difficulty_factor = difficulty_factor;
+  const config: PoWConfig = {
+    string: PHRASE,
+    difficulty_factor,
+    salt: SALT,
+  };
 
-  const t0 = performance.now();
-  gen_pow(config.salt, config.string, config.difficulty_factor);
-  const t1 = performance.now();
-  const duration = t1 - t0;
+  const duration = await prove(config);
 
   const msg: Bench = {
     difficulty: difficulty_factor,

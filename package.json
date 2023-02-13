@@ -16,7 +16,7 @@
     "@types/sinon": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
-    "@wasm-tool/wasm-pack-plugin": "^1.4.0",
+    "@wasm-tool/wasm-pack-plugin": "^1.6.0",
     "dart-sass": "^1.25.0",
     "eslint": "^8.0.1",
     "jest": "^27.2.5",
@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@mcaptcha/vanilla-glue": "^0.1.0-alpha-3",
-    "@mcaptcha/pow-wasm": "0.1.0-alpha-1"
+    "@mcaptcha/pow_sha256-polyfill": "^0.1.0-alpha-1",
+    "@mcaptcha/pow-wasm": "^0.1.0-alpha-1"
   }
 }

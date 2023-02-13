@@ -1,30 +1,30 @@
-'use strict';
-const path = require('path');
+"use strict";
+const path = require("path");
 //const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
 
 module.exports = {
-  devtool: 'inline-source-map',
-  mode: 'development',
+  devtool: "inline-source-map",
+  mode: "production",
   //mode: 'production',
   entry: {
-    bundle: './templates/index.ts',
-    bench: './templates/bench/service-worker.ts',
-    glue: './templates/bench/vendor.ts',
+    bundle: "./templates/index.ts",
+    bench: "./templates/bench/service-worker.ts",
+    glue: "./templates/bench/vendor.ts",
   },
   output: {
-    filename: '[name].js',
-    path: path.resolve(__dirname, './static/cache/bundle'),
+    filename: "[name].js",
+    path: path.resolve(__dirname, "./static/cache/bundle"),
   },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        loader: 'ts-loader',
+        loader: "ts-loader",
       },
     ],
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js'],
+    extensions: [".ts", ".tsx", ".js"],
   },
 
   experiments: {
