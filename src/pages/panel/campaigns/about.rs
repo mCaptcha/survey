@@ -19,8 +19,8 @@ use std::str::FromStr;
 
 use actix_web::http::header::ContentType;
 use actix_web::{web, HttpResponse, Responder};
+use sqlx::types::Uuid;
 use tera::Context;
-use uuid::Uuid;
 
 use crate::errors::ServiceError;
 use crate::settings::Settings;

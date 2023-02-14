@@ -24,7 +24,7 @@ use actix_web::{http, web, HttpResponse, Responder};
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
-use uuid::Uuid;
+use sqlx::types::Uuid;
 
 use super::{get_uuid, RedirectQuery};
 use crate::errors::*;
@@ -95,7 +95,7 @@ pub fn services(cfg: &mut web::ServiceConfig) {
 pub mod runners {
     use super::*;
 
-    pub async fn register_runner(data: &AppData) -> ServiceResult<uuid::Uuid> {
+    pub async fn register_runner(data: &AppData) -> ServiceResult<sqlx::types::Uuid> {
         let mut uuid;
         let now = OffsetDateTime::now_utc();
 

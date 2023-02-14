@@ -16,7 +16,7 @@
  */
 use actix_identity::Identity;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sqlx::types::Uuid;
 
 use crate::api::v1::admin::auth::runners::{login_runner, Login, Password};
 use crate::api::v1::admin::campaigns::runners;
@@ -103,11 +103,11 @@ async fn get_title(
 )]
 pub async fn delete_campaign(
     id: Identity,
-    path: web::Path<Uuid>,
+    path: web::Path<uuid::Uuid>,
     data: AppData,
 ) -> PageResult<impl Responder, SudoDelete> {
     let username = id.identity().unwrap();
-    let uuid = path.into_inner();
+    let uuid = Uuid::parse_str(&path.to_string()).unwrap();
 
     let title = get_title(&username, &uuid, &data)
         .await
@@ -130,12 +130,13 @@ pub async fn delete_campaign(
 )]
 pub async fn delete_campaign_submit(
     id: Identity,
-    uuid: web::Path<Uuid>,
+    uuid: web::Path<uuid::Uuid>,
     payload: web::Form<Password>,
     data: AppData,
 ) -> PageResult<impl Responder, SudoDelete> {
     let username = id.identity().unwrap();
     let payload = payload.into_inner();
+    let uuid = Uuid::parse_str(&uuid.to_string()).unwrap();
 
     let creds = Login {
         login: username,

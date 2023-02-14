@@ -28,7 +28,7 @@ use actix_web::{
 
 use lazy_static::lazy_static;
 use serde::Serialize;
-use uuid::Uuid;
+use sqlx::types::Uuid;
 
 use super::*;
 use crate::api::v1::admin::{

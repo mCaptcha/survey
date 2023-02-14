@@ -21,8 +21,8 @@ use config::{Config, ConfigError, Environment, File};
 use log::{debug, warn};
 use serde::Deserialize;
 use serde::Serialize;
+use sqlx::types::Uuid;
 use url::Url;
-use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Server {

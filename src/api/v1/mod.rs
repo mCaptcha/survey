@@ -16,7 +16,7 @@
  */
 use actix_web::web::ServiceConfig;
 use serde::Deserialize;
-use uuid::Uuid;
+use sqlx::types::Uuid;
 
 pub mod admin;
 pub mod bench;
@@ -44,7 +44,7 @@ pub fn get_random(len: usize) -> String {
 }
 
 pub fn get_uuid() -> Uuid {
-    Uuid::new_v4()
+    Uuid::parse_str(&uuid::Uuid::new_v4().to_string()).unwrap()
 }
 
 #[derive(Deserialize)]

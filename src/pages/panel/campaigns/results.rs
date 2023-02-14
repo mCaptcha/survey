@@ -20,8 +20,8 @@ use std::str::FromStr;
 use actix_web::http::header::ContentType;
 use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
+use sqlx::types::Uuid;
 use tera::Context;
-use uuid::Uuid;
 
 use crate::api::v1::admin::campaigns::{runners, ResultsPage, SurveyResponse};
 use crate::errors::ServiceError;

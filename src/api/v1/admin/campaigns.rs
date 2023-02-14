@@ -20,7 +20,7 @@ use actix_identity::Identity;
 use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
-use uuid::Uuid;
+use sqlx::types::Uuid;
 
 use super::{get_admin_check_login, get_uuid};
 use crate::api::v1::bench::Bench;
@@ -102,7 +102,7 @@ pub mod runners {
         username: &str,
         payload: &mut AddCapmaign,
         data: &AppData,
-    ) -> ServiceResult<uuid::Uuid> {
+    ) -> ServiceResult<sqlx::types::Uuid> {
         let mut uuid;
         let now = OffsetDateTime::now_utc();
 
@@ -203,7 +203,7 @@ pub mod runners {
     impl From<InnerU> for SurveyUser {
         fn from(u: InnerU) -> Self {
             Self {
-                id: u.id,
+                id: uuid::Uuid::parse_str(&u.id.to_string()).unwrap(),
                 created_at: u.created_at.unix_timestamp(),
             }
         }
@@ -254,13 +254,13 @@ pub mod runners {
         } else {
             #[derive(Debug)]
             struct I {
-                id: Option<i32>,
-                submitted_at: Option<OffsetDateTime>,
-                user_id: Option<Uuid>,
+                id: i32,
+                submitted_at: OffsetDateTime,
+                user_id: Uuid,
                 threads: Option<i32>,
-                device_user_provided: Option<String>,
-                device_software_recognised: Option<String>,
-                name: Option<String>,
+                device_user_provided: String,
+                device_software_recognised: String,
+                name: String,
             }
             let mut i = sqlx::query_as!(
                 I,
@@ -296,13 +296,13 @@ pub mod runners {
             let mut res = Vec::with_capacity(i.len());
             i.drain(0..).for_each(|x| {
                 res.push(InternalSurveyResp {
-                    id: x.id.unwrap(),
-                    submitted_at: x.submitted_at.unwrap(),
-                    user_id: x.user_id.unwrap(),
+                    id: x.id,
+                    submitted_at: x.submitted_at,
+                    user_id: x.user_id,
                     threads: x.threads,
-                    device_user_provided: x.device_user_provided.unwrap(),
-                    device_software_recognised: x.device_software_recognised.unwrap(),
-                    name: x.name.unwrap(),
+                    device_user_provided: x.device_user_provided,
+                    device_software_recognised: x.device_software_recognised,
+                    name: x.name,
                 })
             });
             res
@@ -413,7 +413,7 @@ pub struct SurveyResponse {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SurveyUser {
     pub created_at: i64, // OffsetDateTime,
-    pub id: Uuid,
+    pub id: uuid::Uuid,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -477,12 +477,13 @@ impl ResultsPage {
 pub async fn get_campaign_resutls(
     id: Identity,
     query: web::Query<ResultsPage>,
-    path: web::Path<Uuid>,
+    path: web::Path<uuid::Uuid>,
     data: AppData,
 ) -> ServiceResult<impl Responder> {
     let username = id.identity().unwrap();
     let query = query.into_inner();
     let page = query.page();
+    let path = Uuid::parse_str(&path.to_string()).unwrap();
 
     let results =
         runners::get_results(&username, &path, &data, page, 50, query.bench_type)
@@ -592,7 +593,7 @@ mod tests {
 
         let responses = super::runners::get_results(
             NAME,
-            &uuid::Uuid::parse_str(&campaign.campaign_id).unwrap(),
+            &sqlx::types::Uuid::parse_str(&campaign.campaign_id).unwrap(),
             &AppData::new(data.clone()),
             0,
             50,
@@ -610,7 +611,7 @@ mod tests {
         assert_eq!(
             super::runners::get_results(
                 NAME,
-                &uuid::Uuid::parse_str(&campaign.campaign_id).unwrap(),
+                &sqlx::types::Uuid::parse_str(&campaign.campaign_id).unwrap(),
                 &AppData::new(data.clone()),
                 0,
                 50,
@@ -624,7 +625,7 @@ mod tests {
         assert_eq!(
             super::runners::get_results(
                 NAME,
-                &uuid::Uuid::parse_str(&campaign.campaign_id).unwrap(),
+                &sqlx::types::Uuid::parse_str(&campaign.campaign_id).unwrap(),
                 &AppData::new(data.clone()),
                 0,
                 50,

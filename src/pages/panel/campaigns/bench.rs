@@ -19,7 +19,6 @@ use std::cell::RefCell;
 use actix_web::http::header::ContentType;
 use actix_web::{web, HttpResponse, Responder};
 use tera::Context;
-use uuid::Uuid;
 
 use crate::AppData;
 use crate::PAGES;
@@ -56,7 +55,7 @@ impl Bench {
 )]
 pub async fn bench(
     data: AppData,
-    _path: web::Path<Uuid>,
+    _path: web::Path<uuid::Uuid>,
 ) -> PageResult<impl Responder, Bench> {
     let bench = Bench::new(&data.settings).render();
     let html = ContentType::html();

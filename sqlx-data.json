@@ -1,18 +1,5 @@
 {
   "db": "PostgreSQL",
-  "03c9789e83a398bed96354924a0e63ccaa97bec667fda1b8277bb9afda9a6fcd": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Uuid"
-        ]
-      }
-    },
-    "query": "DELETE \n            FROM survey_campaigns \n         WHERE \n             user_id = (\n                 SELECT \n                         ID \n                 FROM \n                         survey_admins \n                 WHERE \n                         name = $1\n             )\n         AND\n            id = ($2)"
-  },
   "0d22134cc5076304b7895827f006ee8269cc500f400114a7472b83f0f1c568b5": {
     "describe": {
       "columns": [],
@@ -26,6 +13,32 @@
       }
     },
     "query": "INSERT INTO survey_admins \n        (name , password,  secret) VALUES ($1, $2, $3)"
+  },
+  "117f1ae18f6a3936f27446b75b555951fe217d3a3cefe40a006fdd3cb31f0ac4": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Varchar",
+          "Varchar",
+          "Int4",
+          "Timestamptz",
+          "Text"
+        ]
+      }
+    },
+    "query": "INSERT INTO survey_responses (\n                    user_id,\n                    campaign_id,\n                    device_user_provided,\n                    device_software_recognised,\n                    threads,\n                    submitted_at,\n                    submission_bench_type_id\n                ) VALUES (\n                    $1, $2, $3, $4, $5, $6,\n                    (SELECT ID FROM survey_bench_type WHERE name = $7)\n                )\n        RETURNING ID;"
   },
   "1373df097fa0e58b23a374753318ae53a44559aa0e7eb64680185baf1c481723": {
     "describe": {
@@ -72,6 +85,19 @@
       }
     },
     "query": "SELECT name, password  FROM survey_admins WHERE email = ($1)"
+  },
+  "1972be28a6bda2c3a3764a836e95c8cb0c5db277fc4c8a9b19951a03166c6492": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "DELETE \n            FROM survey_campaigns \n         WHERE \n             user_id = (\n                 SELECT \n                     ID \n                 FROM \n                     survey_admins \n                 WHERE \n                     name = $1\n             )\n         AND\n            id = ($2)"
   },
   "1b7e17bfc949fa97e8dec1f95e35a02bcf3aa1aa72a1f6f6c8884e885fc3b953": {
     "describe": {
@@ -145,6 +171,65 @@
       }
     },
     "query": "UPDATE survey_admins set password = $1\n        WHERE name = $2"
+  },
+  "57c673ad8529371d77aa305917cf680dd2273ead74c3583ef0322f472b1d33fd": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "device_software_recognised",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "threads",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 3,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "submitted_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "device_user_provided",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "name",
+          "ordinal": 6,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "SELECT\n                survey_responses.ID,\n                survey_responses.device_software_recognised,\n                survey_responses.threads,\n                survey_responses.user_id,\n                survey_responses.submitted_at,\n                survey_responses.device_user_provided,\n                survey_bench_type.name\n            FROM\n                survey_responses\n            INNER JOIN  survey_bench_type ON\n                survey_responses.submission_bench_type_id = survey_bench_type.ID\n            WHERE\n                survey_responses.campaign_id = (\n                    SELECT ID FROM survey_campaigns\n                    WHERE\n                        ID = $1\n                    AND\n                        user_id = (SELECT ID FROM survey_admins WHERE name = $2)\n                )\n            LIMIT $3 OFFSET $4"
   },
   "58ec3b8f98c27e13ec2732f8ee23f6eb9845ac5d9fd97b1e5c9f2eed4b1f5693": {
     "describe": {
@@ -226,6 +311,66 @@
     },
     "query": "SELECT \n            name, id\n        FROM \n            survey_campaigns \n            WHERE\n                user_id = (\n                    SELECT \n                        ID\n                    FROM \n                        survey_admins\n                    WHERE\n                        name = $1\n                )"
   },
+  "74c41e33f91cf31ea13582c8b3ca464544374842450d580517ca2bd01d67402e": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "device_software_recognised",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "threads",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 3,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "submitted_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "device_user_provided",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "name",
+          "ordinal": 6,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Text",
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "SELECT\n                    survey_responses.ID,\n                    survey_responses.device_software_recognised,\n                    survey_responses.threads,\n                    survey_responses.user_id,\n                    survey_responses.submitted_at,\n                    survey_responses.device_user_provided,\n                    survey_bench_type.name\n                FROM\n                    survey_responses\n                INNER JOIN  survey_bench_type ON\n                    survey_responses.submission_bench_type_id = survey_bench_type.ID\n                WHERE\n                    survey_bench_type.name = $3\n                AND\n                    survey_responses.campaign_id = (\n                        SELECT ID FROM survey_campaigns\n                        WHERE\n                            ID = $1\n                        AND\n                            user_id = (SELECT ID FROM survey_admins WHERE name = $2)\n                    )\n                LIMIT $4 OFFSET $5"
+  },
   "82feafc36533144e49ba374c8c47ca4aa0d6558a9803778ad28cfa7b62382c3e": {
     "describe": {
       "columns": [],
@@ -242,26 +387,31 @@
     },
     "query": "\n                INSERT INTO survey_campaigns (\n                    user_id, ID, name, difficulties, created_at\n                    ) VALUES(\n                        (SELECT id FROM survey_admins WHERE name = $1),\n                        $2, $3, $4, $5\n                    );"
   },
-  "8320dda2b3e107d1451fdfb35eb2a4b8e97364e7b1b74ffe4d6913faf132fb61": {
+  "858a4c06a5c1ba7adb79bcac7d42d106d09d0cbff10c197f2242dcb5c437a1df": {
     "describe": {
       "columns": [
         {
-          "name": "id",
+          "name": "created_at",
           "ordinal": 0,
-          "type_info": "Int4"
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "id",
+          "ordinal": 1,
+          "type_info": "Uuid"
         }
       ],
       "nullable": [
+        false,
         false
       ],
       "parameters": {
         "Left": [
-          "Uuid",
-          "Text"
+          "Uuid"
         ]
       }
     },
-    "query": "SELECT ID \n         FROM survey_responses \n         WHERE \n             user_id = $1 \n         AND \n             device_software_recognised = $2;"
+    "query": "SELECT\n                    created_at,\n                    ID\n                FROM\n                    survey_users\n                WHERE\n                    ID = $1\n               "
   },
   "9cdade613ce724631cc3f187510758ee0929e93ff3f8ce81fe35594756644246": {
     "describe": {
@@ -310,21 +460,31 @@
     },
     "query": "UPDATE survey_admins set secret = $1\n        WHERE name = $2"
   },
-  "b4cd1e5240de1968c8b6d56672cec639b22f41ebf2754dadbf00efe0948c7e68": {
+  "b2619292aa6bd1ac38dca152cbe607b795a151ddc212361a3c6d8c70ea1c93eb": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "duration",
+          "ordinal": 0,
+          "type_info": "Float4"
+        },
+        {
+          "name": "difficulty",
+          "ordinal": 1,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
       "parameters": {
         "Left": [
-          "Uuid",
-          "Uuid",
-          "Varchar",
-          "Varchar",
           "Int4"
         ]
       }
     },
-    "query": "INSERT INTO survey_responses (\n                        user_id, \n                        campaign_id,\n                        device_user_provided,\n                        device_software_recognised,\n                        threads\n                    ) VALUES ($1, $2, $3, $4, $5);"
+    "query": "SELECT\n                    duration,\n                    difficulty\n                FROM\n                    survey_benches\n                WHERE\n                    resp_id = $1\n               "
   },
   "c757589ef26a005e3285e7ab20d8a44c4f2e1cb125f8db061dd198cc380bf807": {
     "describe": {
