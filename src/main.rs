@@ -17,6 +17,7 @@
 use std::env;
 use std::sync::Arc;
 
+use actix_files::Files;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
@@ -27,6 +28,7 @@ use lazy_static::lazy_static;
 use log::info;
 
 mod api;
+mod archive;
 mod data;
 mod errors;
 mod pages;
@@ -70,7 +72,9 @@ pub type AppData = actix_web::web::Data<Arc<crate::data::Data>>;
 #[cfg(not(tarpaulin_include))]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env::set_var("RUST_LOG", "info");
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info");
+    }
 
     pretty_env_logger::init();
 
@@ -83,6 +87,10 @@ async fn main() -> std::io::Result<()> {
     let data = Data::new(settings.clone()).await;
     sqlx::migrate!("./migrations/").run(&data.db).await.unwrap();
     let data = actix_web::web::Data::new(data);
+
+    let arch = archive::Archiver::new(&data.settings);
+    let (archive_kiler, archive_job) =
+        arch.init_archive_job(data.clone()).await.unwrap();
 
     let ip = settings.server.get_ip();
     println!("Starting server on: http://{}", ip);
@@ -101,6 +109,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(actix_middleware::NormalizePath::new(
                 actix_middleware::TrailingSlash::Trim,
             ))
+            .service(Files::new("/download", &settings.publish.dir).show_files_listing())
             .configure(services)
             .app_data(data.clone())
     })
@@ -108,6 +117,11 @@ async fn main() -> std::io::Result<()> {
     .unwrap()
     .run()
     .await
+    .unwrap();
+
+    archive_kiler.send(true).unwrap();
+    archive_job.await;
+    Ok(())
 }
 
 #[cfg(not(tarpaulin_include))]

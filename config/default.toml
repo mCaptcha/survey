@@ -34,6 +34,10 @@ password = "password"
 name = "postgres"
 pool = 4
 
+[publish]
+dir = "/tmp/mcaptcha-survey"
+duration = 3600
+
 [footer]
 about = "https://mcapthca.org/about"
 donate = "https://mcapthca.org/donate"

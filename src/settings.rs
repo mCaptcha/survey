@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 use std::env;
+use std::fs;
 use std::path::Path;
 
 use config::{Config, ConfigError, Environment, File};
@@ -85,6 +86,26 @@ pub struct Footer {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Publish {
+    pub dir: String,
+    pub duration: u64,
+}
+
+impl Publish {
+    fn create_root_dir(&self) {
+        let root = Path::new(&self.dir);
+        if root.exists() {
+            if !root.is_dir() {
+                std::fs::remove_file(&root).unwrap();
+                std::fs::create_dir_all(&root).unwrap();
+            }
+        } else {
+            std::fs::create_dir_all(&root).unwrap();
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub debug: bool,
     pub allow_registration: bool,
@@ -94,6 +115,7 @@ pub struct Settings {
     pub support_email: String,
     pub default_campaign: String,
     pub footer: Footer,
+    pub publish: Publish,
 }
 
 #[cfg(not(tarpaulin_include))]
@@ -143,8 +165,11 @@ impl Settings {
 
         set_database_url(&mut s);
 
-        match s.try_into() {
-            Ok(val) => Ok(val),
+        match s.try_into::<Settings>() {
+            Ok(val) => {
+                val.publish.create_root_dir();
+                Ok(val)
+            },
             Err(e) => Err(ConfigError::Message(format!("\n\nError: {}. If it says missing fields, then please refer to https://github.com/mCaptcha/mcaptcha#configuration to learn more about how mcaptcha reads configuration\n\n", e))),
         }
     }
