@@ -85,21 +85,20 @@ pub struct Footer {
     pub thanks: Url,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Archive {
-    pub base_path: String,
+pub struct Publish {
+    pub dir: String,
 }
 
-impl Archive {
-    fn create_archive_base_path(&self) {
-        let base_path = Path::new(&self.base_path);
-        if base_path.exists() {
-            if !base_path.is_dir() {
-                fs::remove_file(&base_path).unwrap();
-                fs::create_dir_all(&base_path).unwrap();
+impl Publish {
+    fn create_root_dir(&self) {
+        let root = Path::new(&self.dir);
+        if root.exists() {
+            if !root.is_dir() {
+                std::fs::remove_file(&root).unwrap();
+                std::fs::create_dir_all(&root).unwrap();
             }
         } else {
-            fs::create_dir_all(&base_path).unwrap();
+            std::fs::create_dir_all(&root).unwrap();
         }
     }
 }
@@ -114,7 +113,7 @@ pub struct Settings {
     pub support_email: String,
     pub default_campaign: String,
     pub footer: Footer,
-    pub archive: Archive,
+    pub publish: Publish,
 }
 
 #[cfg(not(tarpaulin_include))]
@@ -166,7 +165,7 @@ impl Settings {
 
         match s.try_into::<Settings>() {
             Ok(val) => {
-                val.archive.create_archive_base_path();
+                val.publish.create_root_dir();
                 Ok(val)
             },
             Err(e) => Err(ConfigError::Message(format!("\n\nError: {}. If it says missing fields, then please refer to https://github.com/mCaptcha/mcaptcha#configuration to learn more about how mcaptcha reads configuration\n\n", e))),

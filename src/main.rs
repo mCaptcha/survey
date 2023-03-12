@@ -17,6 +17,7 @@
 use std::env;
 use std::sync::Arc;
 
+use actix_files::Files;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
@@ -106,6 +107,7 @@ async fn main() -> std::io::Result<()> {
                 actix_middleware::TrailingSlash::Trim,
             ))
             .configure(services)
+            .service(Files::new("/download", &settings.publish.dir).show_files_listing())
             .app_data(data.clone())
     })
     .bind(ip)

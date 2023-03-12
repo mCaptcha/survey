@@ -34,8 +34,8 @@ password = "password"
 name = "postgres"
 pool = 4
 
-[archive]
-base_path = "/tmp/mcaptcha-survey"
+[publish]
+dir = "/tmp/mcaptcha-survey"
 
 [footer]
 about = "https://mcapthca.org/about"
