@@ -85,8 +85,10 @@ pub struct Footer {
     pub thanks: Url,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Publish {
     pub dir: String,
+    pub duration: u64,
 }
 
 impl Publish {

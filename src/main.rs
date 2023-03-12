@@ -72,7 +72,9 @@ pub type AppData = actix_web::web::Data<Arc<crate::data::Data>>;
 #[cfg(not(tarpaulin_include))]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    //env::set_var("RUST_LOG", "info");
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info");
+    }
 
     pretty_env_logger::init();
 
@@ -87,7 +89,8 @@ async fn main() -> std::io::Result<()> {
     let data = actix_web::web::Data::new(data);
 
     let arch = archive::Archiver::new(&data.settings);
-    arch.archive(&data).await.unwrap();
+    let (archive_kiler, archive_job) =
+        arch.init_archive_job(data.clone()).await.unwrap();
 
     let ip = settings.server.get_ip();
     println!("Starting server on: http://{}", ip);
@@ -106,14 +109,19 @@ async fn main() -> std::io::Result<()> {
             .wrap(actix_middleware::NormalizePath::new(
                 actix_middleware::TrailingSlash::Trim,
             ))
-            .configure(services)
             .service(Files::new("/download", &settings.publish.dir).show_files_listing())
+            .configure(services)
             .app_data(data.clone())
     })
     .bind(ip)
     .unwrap()
     .run()
     .await
+    .unwrap();
+
+    archive_kiler.send(true).unwrap();
+    archive_job.await;
+    Ok(())
 }
 
 #[cfg(not(tarpaulin_include))]
