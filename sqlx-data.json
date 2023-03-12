@@ -60,6 +60,26 @@
     },
     "query": "SELECT password  FROM survey_admins WHERE name = ($1)"
   },
+  "15a8484de6f035e56c34ce3f6979eadea81f125933f76261c8b3c8319d43bbe0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "name",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT\n                survey_admins.name\n            FROM\n                survey_admins\n            INNER JOIN survey_campaigns ON\n                survey_admins.ID = survey_campaigns.user_id\n            WHERE\n                survey_campaigns.ID = $1\n            "
+  },
   "19686bfe8772cbc6831d46d18994e2b9aa40c7181eae9a31e51451cce95f04e8": {
     "describe": {
       "columns": [
@@ -518,6 +538,42 @@
       }
     },
     "query": "SELECT secret  FROM survey_admins WHERE name = ($1)"
+  },
+  "efa0e41910fa5bcb187ba9e2fc8f37bee5b25ffe9a2d175f39a69899bc559965": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "difficulties",
+          "ordinal": 2,
+          "type_info": "Int4Array"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT ID, name, difficulties, created_at FROM survey_campaigns"
   },
   "fcdc5fe5d496eb516c805e64ec96d9626b74ab33cd6e75e5a08ae88967403b72": {
     "describe": {
