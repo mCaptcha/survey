@@ -58,6 +58,8 @@ lazy_static! {
         FILES.get("./static/cache/bundle/glue.js").unwrap();
 }
 
+pub const DOWNLOAD_SCOPE: &str = "/download";
+
 pub const CACHE_AGE: u32 = 604800;
 
 pub const COMPILED_DATE: &str = env!("COMPILED_DATE");
@@ -109,7 +111,9 @@ async fn main() -> std::io::Result<()> {
             .wrap(actix_middleware::NormalizePath::new(
                 actix_middleware::TrailingSlash::Trim,
             ))
-            .service(Files::new("/download", &settings.publish.dir).show_files_listing())
+            .service(
+                Files::new(DOWNLOAD_SCOPE, &settings.publish.dir).show_files_listing(),
+            )
             .configure(services)
             .app_data(data.clone())
     })

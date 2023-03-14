@@ -66,10 +66,13 @@ pub const FOOTER: TemplateFile =
 pub const PANEL_NAV: TemplateFile =
     TemplateFile::new("panel_nav", "panel/nav/index.html");
 
+pub const PUBLIC_NAV: TemplateFile =
+    TemplateFile::new("pub_nav", "panel/nav/public.html");
+
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
         let mut tera = Tera::default();
-        for t in [BASE, FOOTER, PANEL_NAV].iter() {
+        for t in [BASE, FOOTER, PANEL_NAV, PUBLIC_NAV].iter() {
             t.register(&mut tera).unwrap();
         }
         errors::register_templates(&mut tera);

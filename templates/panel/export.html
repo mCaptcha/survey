@@ -1,0 +1,43 @@
+{% extends 'base' %} 
+{% block body %}
+<body class="panel__body">
+  <main class="panel__container">
+    {% if payload %}
+      <table class="campaign__table">
+      <thead class="campaign__heading">
+        <tr>
+          <th class="campaign__title-text">ID</th>
+          <th class="campaign__title-text">Name</th>
+          <th class="campaign__title-text">Export Link</th>
+        </tr>
+      </thead>
+      <tbody class="campaign__body">
+        {% for campaign in payload.campaigns %}
+          <tr class="campaign__item">
+            <td>
+              <a href="{{ campaign.route }}">
+                <p class="campaign__item-heading">{{ campaign.name }}</p>
+              </a>
+            </td>
+            <td>
+              <a href="{{ campaign.route }}">
+                <p class="campaign__item-text">{{ campaign.uuid }}</p></a
+              >
+            </td>
+
+            <td>
+              <a href="{{ campaign.export_link }}">
+                <p class="campaign__item-text">Click Here</p></a
+              >
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% else %}
+      <p>Looks like there are no campaigns on this instance</p>
+    {% endif %}
+  </main>
+</body>
+{% endblock body %}

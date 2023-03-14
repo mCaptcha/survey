@@ -19,12 +19,13 @@ pub use super::{context, Footer, TemplateFile, PAGES, PAYLOAD_KEY, TEMPLATES};
 use crate::AppData;
 
 mod campaigns;
+mod export;
 
 pub fn register_templates(t: &mut tera::Tera) {
     campaigns::register_templates(t);
-    //    for template in [REGISTER].iter() {
-    //        template.register(t).expect(template.name);
-    //    }
+    for template in [export::EXPORT_CAMPAIGNS].iter() {
+        template.register(t).expect(template.name);
+    }
 }
 
 pub mod routes {
@@ -34,6 +35,7 @@ pub mod routes {
     #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
     pub struct Panel {
         pub home: &'static str,
+        pub export: &'static str,
         pub campaigns: Campaigns,
     }
     impl Panel {
@@ -41,6 +43,7 @@ pub mod routes {
             let campaigns = Campaigns::new();
             Panel {
                 home: "/",
+                export: "/export",
                 campaigns,
             }
         }
@@ -55,6 +58,7 @@ pub mod routes {
 pub fn services(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(home);
     campaigns::services(cfg);
+    export::services(cfg);
 }
 
 #[actix_web_codegen_const_routes::get(path = "PAGES.panel.home")]

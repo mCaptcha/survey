@@ -143,6 +143,32 @@ pub mod runners {
         Ok(uuid)
     }
 
+    pub async fn list_all_campaigns(
+        data: &AppData,
+    ) -> ServiceResult<Vec<ListCampaignResp>> {
+        struct ListCampaign {
+            name: String,
+            id: Uuid,
+        }
+
+        let mut campaigns = sqlx::query_as!(
+            ListCampaign,
+            "SELECT name, id FROM survey_campaigns ORDER BY id;"
+        )
+        .fetch_all(&data.db)
+        .await?;
+
+        let mut list_resp = Vec::with_capacity(campaigns.len());
+        campaigns.drain(0..).for_each(|c| {
+            list_resp.push(ListCampaignResp {
+                name: c.name,
+                uuid: c.id.to_string(),
+            });
+        });
+
+        Ok(list_resp)
+    }
+
     pub async fn list_campaign_runner(
         username: &str,
         data: &AppData,

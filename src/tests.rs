@@ -126,7 +126,9 @@ macro_rules! get_app {
             .wrap(actix_web::middleware::NormalizePath::new(
                 actix_web::middleware::TrailingSlash::Trim,
             ))
-            .service(Files::new("/download", &$settings.publish.dir).show_files_listing())
+            .service(
+                Files::new("/download", &$settings.publish.dir).show_files_listing(),
+            )
             .configure($crate::services)
     };
 
